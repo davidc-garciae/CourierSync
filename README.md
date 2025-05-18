@@ -1,3 +1,5 @@
+[![Deploy to Vercel](https://github.com/davidc-garciae/CourierSync/actions/workflows/deploy-vercel.yml/badge.svg?branch=main)](https://github.com/davidc-garciae/CourierSync/actions/workflows/deploy-vercel.yml)
+
 # Dashboard Administrativo Next.js + Tailwind (Atomic Design)
 
 Este proyecto es un dashboard administrativo construido con Next.js y Tailwind CSS, siguiendo la metodología Atomic Design. Permite buscar, editar y gestionar usuarios y pedidos, con una experiencia de usuario moderna, feedback visual, animaciones y despliegue automático en Vercel.

@@ -18,7 +18,7 @@ export const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({ user }) => {
       localStorage.removeItem("auth-token"); // ejemplo, ajusta según tu clave real
       localStorage.removeItem("user-session"); // ejemplo, ajusta según tu clave real
       sessionStorage.clear();
-      window.location.href = "http://localhost:3000";
+      window.location.href = "/";
     }
   };
 
