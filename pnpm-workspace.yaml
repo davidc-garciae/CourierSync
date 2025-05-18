@@ -1,2 +1,5 @@
+packages:
+  - 'src/*'
+  - 'components/*'
 onlyBuiltDependencies:
   - sharp
