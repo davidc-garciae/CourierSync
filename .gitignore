@@ -30,3 +30,4 @@ coverage/
 
 # Ignore pnpm store
 .pnpm-store/
+.vercel
