@@ -52,20 +52,7 @@ export function useComentarios(envioId: string | null) {
   }, [data]);
 
   // Función para formatear fecha
-  const formatearFecha = (fechaISO: string): string => {
-    try {
-      const fecha = new Date(fechaISO);
-      return fecha.toLocaleDateString('es-CO', {
-        year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch {
-      return fechaISO;
-    }
-  };
+  // (Eliminada porque no se utiliza)
 
   // Función para agregar nuevo comentario
   const handleAgregarComentario = async (texto: string) => {

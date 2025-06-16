@@ -94,7 +94,7 @@ export function useUserProfile() {
           direccion: cliente.direccion,
           phone: cliente.telefono,
           email: cliente.correoElectronico,
-          tipoId: cliente.idTipoDocumento?.nombre || 'No especificado',
+          tipoId: cliente.idTipoDocumento?.nombre ?? 'No especificado',
           numeroId: cliente.numeroDocumento,
           userType: 'cliente'
         });

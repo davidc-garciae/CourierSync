@@ -18,7 +18,7 @@ export function LabelAttributeValue({
   className = "",
   labelClassName = "block text-xs font-medium text-muted-foreground",
   valueClassName = "mt-1 text-base font-semibold",
-}: LabelAttributeValueProps) {
+}: Readonly<LabelAttributeValueProps>) {
   return (
     <div className={className}>
       <span className={labelClassName}>{label}</span>

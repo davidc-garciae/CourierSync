@@ -30,7 +30,7 @@ export function SidebarCollapsibleGroup({
   title,
   defaultOpen = true,
   children,
-}: SidebarCollapsibleGroupProps) {
+}: Readonly<SidebarCollapsibleGroupProps>) {
   return (
     <Collapsible
       title={title}

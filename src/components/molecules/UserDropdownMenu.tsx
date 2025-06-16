@@ -9,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/molecules/basic/dropdown-menu";
-import { LogoutIcon } from "../ui/logout";
-import { ChevronUpIcon } from "../ui/chevron-up";
+import { LogoutIcon } from "../atoms/logout";
+import { ChevronUpIcon } from "../atoms/chevron-up";
 
 interface UserDropdownMenuProps {
   user: {

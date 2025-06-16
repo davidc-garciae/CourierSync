@@ -86,16 +86,14 @@ function ColorThemeSelectComponent() {
     });
     // Aplica la clase seleccionada
     const themeObj = THEME_OPTIONS.find((theme) => theme.name === color);
-    if (themeObj && themeObj.className) {
-      classList.add(themeObj.className);
-    }
+    themeObj?.className && classList.add(themeObj.className);
   }, []);
 
   // Inicializar solo una vez cuando se monta el componente
   useEffect(() => {
     if (typeof window !== "undefined") {
       setMounted(true);
-      const color = localStorage.getItem("theme-color") || "default";
+      const color = localStorage.getItem("theme-color") ?? "default";
       setSelected(color);
       applyColorClass(color);
     }
@@ -126,7 +124,7 @@ function ColorThemeSelectComponent() {
         <SelectItem key={`theme-${themeOption.name}`} value={themeOption.name}>
           <div className="inline-flex items-center gap-2">
             <span
-              className="w-4 h-4 rounded-full border border-border flex-shrink-0"
+              className="flex-shrink-0 w-4 h-4 border rounded-full border-border"
               style={{ backgroundColor: themeOption.color }}
             />
             <span>{themeOption.label}</span>

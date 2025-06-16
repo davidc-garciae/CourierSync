@@ -5,7 +5,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/atoms/sonner";
 import { ApolloProviderWrapper } from "@/lib/providers";
 
-function ThemeProviderWrapper({ children }: { children: ReactNode }) {
+function ThemeProviderWrapper({ children }: { readonly children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   if (!mounted) return null;
@@ -20,7 +20,7 @@ interface RootLayoutProps {
   children: ReactNode;
 }
 
-export default function RootLayout({ children }: RootLayoutProps) {
+export default function RootLayout({ children }: Readonly<RootLayoutProps>) {
   return (
     <html lang="es">
       <head>

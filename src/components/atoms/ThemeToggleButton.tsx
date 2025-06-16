@@ -1,11 +1,9 @@
 "use client";
 
-import React from "react";
 import { useTheme } from "next-themes";
-import { Sun, Moon } from "lucide-react";
 import { useEffect, useState } from "react";
-import { SunIcon } from "../ui/sun";
-import { MoonIcon } from "../ui/moon";
+import { SunIcon } from "./sun";
+import { MoonIcon } from "../auth/moon";
 
 interface ThemeToggleButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {}

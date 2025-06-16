@@ -22,7 +22,10 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   };
 }
 
-export function AppSidebar({ navigationData, ...props }: AppSidebarProps) {
+export function AppSidebar({
+  navigationData,
+  ...props
+}: Readonly<AppSidebarProps>) {
   // Obtener datos reales del usuario autenticado
   const { userProfile, loading } = useUserProfile();
 

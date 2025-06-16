@@ -6,9 +6,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/organisms/basic/sheet";
-import { Button } from "@/components/atoms/button";
 
-export function AppInfoSheet({ trigger }: { trigger: React.ReactNode }) {
+export function AppInfoSheet({
+  trigger,
+}: {
+  readonly trigger: React.ReactNode;
+}) {
   const [open, setOpen] = React.useState(false);
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -21,37 +24,49 @@ export function AppInfoSheet({ trigger }: { trigger: React.ReactNode }) {
           <p>
             <b>¡Atención!</b> Esta aplicación está{" "}
             <span className="font-semibold text-primary">
-              lista para conectarse al backend
+              conectada correctamente al backend
             </span>
-            , pero el <b>backend aún no está desplegado adecuadamente</b>{" "}
-            (versión anterior).
+            {", "}y todas las funcionalidades principales están disponibles.
           </p>
           <ul className="pl-5 text-sm list-disc text-muted-foreground">
             <li>
-              El <b>frontend</b> está completamente preparado para integrarse
-              con servicios reales.
+              El <b>frontend</b> está completamente integrado con servicios
+              reales.
             </li>
             <li>
-              El <b>backend</b> se encuentra en una versión anterior y no está
-              disponible actualmente.
+              El <b>backend</b> está desplegado y operativo.
             </li>
             <li>
-              Por el momento <b>no es posible iniciar sesión</b> ni acceder a
-              las funcionalidades.
+              Ya es posible <b>iniciar sesión</b> y acceder a las
+              funcionalidades principales.
             </li>
             <li>
-              En la <b>próxima actualización</b> se implementará un sistema de
-              datos simulados para demostrar todas las funcionalidades sin
-              necesidad de backend.
+              Puedes probar el sistema usando las credenciales de usuario y
+              administrador listadas abajo.
             </li>
             <li>
-              Esto permitirá navegar y probar todas las características del
-              dashboard administrativo con datos de ejemplo.
+              Próximamente se implementará un modo demostración con datos
+              simulados para pruebas sin conexión.
             </li>
           </ul>
           <div className="mt-4 text-xs text-muted-foreground">
             Próximamente: Modo demostración con datos simulados para una
             experiencia completa sin dependencias del backend.
+          </div>
+          <div className="mt-4 text-xs text-muted-foreground">
+            <b>Credenciales de acceso disponibles:</b>
+            <ul className="pl-5 mt-1 list-disc">
+              <li>
+                <b>Usuario:</b> alejandroorrego@gmail.com
+                <br />
+                <b>Contraseña:</b> user
+              </li>
+              <li>
+                <b>Administrador:</b> admin1
+                <br />
+                <b>Contraseña:</b> admin1
+              </li>
+            </ul>
           </div>
         </div>
       </SheetContent>

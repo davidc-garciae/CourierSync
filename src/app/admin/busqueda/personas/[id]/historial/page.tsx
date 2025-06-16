@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useParams } from "next/navigation";
 import {
   Card,
@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import { CommentsSheet } from "@/components/organisms/CommentsSheet";
 import { StateEditorSheet } from "@/components/organisms/StateEditorSheet";
-import { RefreshCCWDotIcon } from "@/components/ui/refresh-ccw-dot";
+import { RefreshCCWDotIcon } from "@/components/atoms/refresh-ccw-dot";
 import { useQuery, useMutation } from "@apollo/client";
 import {
   ENVIOS_POR_CLIENTE,
@@ -99,7 +99,7 @@ function getBreadcrumbs(id: string | undefined, clienteNombre?: string) {
     { label: "Búsqueda", href: "/admin/busqueda/personas" },
     id
       ? {
-          label: clienteNombre || `Usuario #${id}`,
+          label: clienteNombre ?? `Usuario #${id}`,
           href: `/admin/busqueda/personas/${id}`,
         }
       : { label: "Perfil de usuario", href: "#" },
@@ -108,7 +108,7 @@ function getBreadcrumbs(id: string | undefined, clienteNombre?: string) {
 }
 
 export default function AdminUserHistorialPage() {
-  const { id } = useParams() as { id: string };
+  const { id } = useParams();
   const [comentSheet, setComentSheet] = useState<string | null>(null);
   const [stateEditorSheet, setStateEditorSheet] = useState<string | null>(null);
   const [editingEnvio, setEditingEnvio] = useState<Envio | null>(null);
@@ -129,7 +129,7 @@ export default function AdminUserHistorialPage() {
 
   // Query para obtener envíos del cliente
   const { data, loading, error, refetch } = useQuery(ENVIOS_POR_CLIENTE, {
-    variables: { id_cliente: parseInt(id) },
+    variables: { id_cliente: id ? parseInt(id as string) : 0 },
     fetchPolicy: "cache-and-network",
     skip: !id,
   });
@@ -148,7 +148,7 @@ export default function AdminUserHistorialPage() {
     },
   });
 
-  const envios: Envio[] = data?.enviosPorCliente || [];
+  const envios: Envio[] = data?.enviosPorCliente ?? [];
   const cliente = clienteData?.buscaCliente;
   const clienteNombre = cliente
     ? `${cliente.nombre} ${cliente.apellido}`
@@ -183,7 +183,12 @@ export default function AdminUserHistorialPage() {
 
   return (
     <>
-      <DashboardHeader breadcrumbs={getBreadcrumbs(id, clienteNombre)} />
+      <DashboardHeader
+        breadcrumbs={getBreadcrumbs(
+          Array.isArray(id) ? id[0] : id,
+          clienteNombre
+        )}
+      />
       <div className="flex flex-col w-full h-full p-4 bg-gradient-to-br from-primary/70 to-primary/10">
         <Card className="w-full mx-auto border shadow-2xl backdrop-blur border-border bg-card/95">
           <CardHeader className="flex flex-col items-center gap-2 pb-2 mb-4">
@@ -204,108 +209,122 @@ export default function AdminUserHistorialPage() {
             )}
           </CardHeader>
           <CardContent>
-            {loading ? (
-              <div className="flex flex-col gap-4">
-                {[...Array(3)].map((_, idx) => (
-                  <Skeleton key={idx} className="w-full h-12 rounded" />
-                ))}
-              </div>
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-                <span
-                  className="text-lg font-semibold text-destructive"
-                  role="alert"
-                  aria-live="assertive"
-                >
-                  ❌ Error al cargar historial: {error.message}
-                </span>
-                <Button
-                  onClick={() => refetch()}
-                  variant="outline"
-                  className="flex items-center shadow-lg group"
-                >
-                  Reintentar
-                  <RefreshCCWDotIcon className="ml-2 transition-transform duration-300 group-hover:rotate-180" />
-                </Button>
-              </div>
-            ) : envios.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
-                <div className="text-6xl mb-4">📦</div>
-                <h3 className="text-xl font-semibold text-muted-foreground">
-                  Sin envíos registrados
-                </h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  Este usuario aún no tiene envíos registrados en el sistema.
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID Envío</TableHead>
-                      <TableHead>Guía</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Dirección</TableHead>
-                      <TableHead>Precio</TableHead>
-                      <TableHead>Comentarios</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {envios.map((envio) => (
-                      <TableRow key={envio.id_envio}>
-                        <TableCell className="font-mono text-sm">
-                          {envio.id_envio}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">
-                          {envio.numeroGuia}
-                        </TableCell>
-                        <TableCell>{formatFecha(envio.fechaCompra)}</TableCell>
-                        <TableCell>
-                          <span
-                            className={`px-2 py-1 rounded text-xs font-semibold ${getEstadoColor(
-                              envio.id_estado.nombre
-                            )}`}
-                          >
-                            {envio.id_estado.nombre}
-                          </span>
-                        </TableCell>
-                        <TableCell
-                          className="max-w-xs truncate"
-                          title={envio.direccionEnvio}
-                        >
-                          {envio.direccionEnvio}
-                        </TableCell>
-                        <TableCell className="font-semibold text-green-600 dark:text-green-400">
-                          {formatPrecio(envio.precio)}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setComentSheet(envio.id_envio)}
-                          >
-                            Ver comentarios
-                          </Button>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleEdit(envio)}
-                            disabled={updatingEnvio}
-                          >
-                            Editar estado
-                          </Button>
-                        </TableCell>
-                      </TableRow>
+            {(() => {
+              if (loading) {
+                return (
+                  <div className="flex flex-col gap-4">
+                    {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
+                      <Skeleton key={key} className="w-full h-12 rounded" />
                     ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                  </div>
+                );
+              }
+              if (error) {
+                return (
+                  <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
+                    <span
+                      className="text-lg font-semibold text-destructive"
+                      role="alert"
+                      aria-live="assertive"
+                    >
+                      ❌ Error al cargar historial: {error.message}
+                    </span>
+                    <Button
+                      onClick={() => refetch()}
+                      variant="outline"
+                      className="flex items-center shadow-lg group"
+                    >
+                      Reintentar
+                      <RefreshCCWDotIcon className="ml-2 transition-transform duration-300 group-hover:rotate-180" />
+                    </Button>
+                  </div>
+                );
+              }
+              if (envios.length === 0) {
+                return (
+                  <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                    <div className="mb-4 text-6xl">📦</div>
+                    <h3 className="text-xl font-semibold text-muted-foreground">
+                      Sin envíos registrados
+                    </h3>
+                    <p className="max-w-md text-sm text-muted-foreground">
+                      Este usuario aún no tiene envíos registrados en el
+                      sistema.
+                    </p>
+                  </div>
+                );
+              }
+              return (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>ID Envío</TableHead>
+                        <TableHead>Guía</TableHead>
+                        <TableHead>Fecha</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead>Dirección</TableHead>
+                        <TableHead>Precio</TableHead>
+                        <TableHead>Comentarios</TableHead>
+                        <TableHead>Acciones</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {envios.map((envio) => (
+                        <TableRow key={envio.id_envio}>
+                          <TableCell className="font-mono text-sm">
+                            {envio.id_envio}
+                          </TableCell>
+                          <TableCell className="font-mono text-sm">
+                            {envio.numeroGuia}
+                          </TableCell>
+                          <TableCell>
+                            {formatFecha(envio.fechaCompra)}
+                          </TableCell>
+                          <TableCell>
+                            <span
+                              className={`px-2 py-1 rounded text-xs font-semibold ${getEstadoColor(
+                                envio.id_estado.nombre
+                              )}`}
+                            >
+                              {envio.id_estado.nombre}
+                            </span>
+                          </TableCell>
+                          <TableCell
+                            className="max-w-xs truncate"
+                            title={envio.direccionEnvio}
+                          >
+                            {envio.direccionEnvio}
+                          </TableCell>
+                          <TableCell className="font-semibold text-green-600 dark:text-green-400">
+                            {formatPrecio(envio.precio)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setComentSheet(envio.id_envio)}
+                            >
+                              Ver comentarios
+                            </Button>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleEdit(envio)}
+                              disabled={updatingEnvio}
+                            >
+                              Editar estado
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              );
+            })()}
 
             {/* Sheet para comentarios */}
             <CommentsSheet

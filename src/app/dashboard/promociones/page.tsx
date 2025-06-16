@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/molecules/basic/card";
 import { DashboardHeader } from "@/components/molecules/DashboardHeader";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "@/components/atoms/badge";
 import { Button } from "@/components/atoms/button";
 import {
   Calendar,
@@ -33,10 +33,10 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 function PromocionCard({
   promocion,
   tipo,
-}: {
+}: Readonly<{
   promocion: PromocionData;
   tipo: "activa" | "proxima" | "expirada";
-}) {
+}>) {
   const diasRestantes =
     tipo === "activa" ? calcularDiasRestantes(promocion.fechaFin) : null;
 
@@ -94,9 +94,12 @@ function PromocionCard({
           </Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">        <p className="text-sm leading-relaxed text-foreground/80">
+      <CardContent className="space-y-4">
+        {" "}
+        <p className="text-sm leading-relaxed text-foreground/80">
           {promocion.descripcion}
-        </p>        <div className="space-y-2">
+        </p>{" "}
+        <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <Calendar className="w-4 h-4 text-foreground/70" />
             <span className="text-foreground/70">Inicio:</span>
@@ -188,7 +191,8 @@ export default function PromocionesPage() {
                   aria-live="assertive"
                 >
                   ❌ Error al cargar promociones
-                </span>                <p className="text-sm text-foreground/70">
+                </span>{" "}
+                <p className="text-sm text-foreground/70">
                   No se pudieron cargar tus promociones. Verifica la conexión
                   con el servidor.
                 </p>
@@ -220,7 +224,9 @@ export default function PromocionesPage() {
                 Mis Promociones
               </CardTitle>
             </CardHeader>
-            <CardContent>              <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
+            <CardContent>
+              {" "}
+              <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
                 <AlertCircle className="w-12 h-12 mb-4 text-orange-500" />
                 <h3 className="text-xl font-semibold text-foreground/80">
                   Sesión requerida
@@ -279,7 +285,8 @@ export default function PromocionesPage() {
                 <CardContent>
                   <div className="text-2xl font-bold text-green-600">
                     {activas.length}
-                  </div>                  <p className="text-xs text-foreground/70">
+                  </div>{" "}
+                  <p className="text-xs text-foreground/70">
                     Disponibles ahora
                   </p>
                 </CardContent>
@@ -295,13 +302,16 @@ export default function PromocionesPage() {
                 <CardContent>
                   <div className="text-2xl font-bold text-blue-600">
                     {proximas.length}
-                  </div>                  <p className="text-xs text-foreground/70">
+                  </div>{" "}
+                  <p className="text-xs text-foreground/70">
                     Próximamente disponibles
                   </p>
                 </CardContent>
               </Card>
 
-              <Card>                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+              <Card>
+                {" "}
+                <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                   <CardTitle className="text-sm font-medium">
                     Historial
                   </CardTitle>
@@ -317,7 +327,6 @@ export default function PromocionesPage() {
                 </CardContent>
               </Card>
             </div>
-
             {/* Promociones Activas */}
             {activas.length > 0 && (
               <div className="space-y-4">
@@ -339,7 +348,6 @@ export default function PromocionesPage() {
                 </div>
               </div>
             )}
-
             {/* Promociones Próximas */}
             {proximas.length > 0 && (
               <div className="space-y-4">
@@ -363,7 +371,6 @@ export default function PromocionesPage() {
                 </div>
               </div>
             )}
-
             {/* Promociones Expiradas */}
             {expiradas.length > 0 && (
               <div className="space-y-4">
@@ -385,7 +392,8 @@ export default function PromocionesPage() {
                     />
                   ))}
                 </div>
-                {expiradas.length > 6 && (                  <div className="text-center">
+                {expiradas.length > 6 && (
+                  <div className="text-center">
                     <p className="text-sm text-foreground/70">
                       Y {expiradas.length - 6} promociones más en el
                       historial...
@@ -393,7 +401,8 @@ export default function PromocionesPage() {
                   </div>
                 )}
               </div>
-            )}            {/* Estado vacío */}
+            )}{" "}
+            {/* Estado vacío */}
             {promociones.length === 0 && (
               <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
                 <Gift className="w-16 h-16 mb-4 text-foreground/50" />

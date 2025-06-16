@@ -63,7 +63,7 @@ export default function BusquedaPersonasAdminPage() {
     fetchPolicy: "cache-and-network",
   });
 
-  const clientes: Cliente[] = data?.listaClientes || [];
+  const clientes: Cliente[] = data?.listaClientes ?? [];
 
   // Función de búsqueda
   const handleSearch = () => {
@@ -146,14 +146,14 @@ export default function BusquedaPersonasAdminPage() {
 
             {loadingClientes && (
               <div className="flex flex-col gap-2 mt-4">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="w-full h-12 rounded" />
+                {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
+                  <Skeleton key={key} className="w-full h-12 rounded" />
                 ))}
               </div>
             )}
 
             {error && (
-              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="p-4 mt-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
                 <p className="font-medium text-red-800 dark:text-red-300">
                   ❌ Error al cargar clientes: {error.message}
                 </p>
@@ -191,7 +191,7 @@ export default function BusquedaPersonasAdminPage() {
                             <TableCell>
                               <div className="text-sm">
                                 <div className="text-xs text-muted-foreground">
-                                  {cliente.idTipoDocumento?.nombre ||
+                                  {cliente.idTipoDocumento?.nombre ??
                                     "Sin tipo"}
                                 </div>
                                 <div>{cliente.numeroDocumento}</div>
@@ -221,9 +221,9 @@ export default function BusquedaPersonasAdminPage() {
 
             {!showResults && !loadingClientes && clientes.length > 0 && (
               <div className="mt-8 text-center text-muted-foreground">
-                <div className="text-4xl mb-2">🔍</div>
+                <div className="mb-2 text-4xl">🔍</div>
                 <p>Escribe al menos 2 caracteres para buscar clientes</p>
-                <p className="text-sm mt-1">
+                <p className="mt-1 text-sm">
                   Puedes buscar por email, teléfono, nombre, apellido o
                   documento
                 </p>

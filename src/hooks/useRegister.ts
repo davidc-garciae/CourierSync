@@ -84,7 +84,7 @@ export function useRegister() {
       
       return {
         success: false,
-        message: err.message || 'Error de conexión con el servidor',
+        message: err.message ?? 'Error de conexión con el servidor',
       };
     }
   };

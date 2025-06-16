@@ -3,7 +3,7 @@ import { ThemeToggleButton } from "@/components/atoms/ThemeToggleButton";
 import { ColorThemeSelect } from "@/components/molecules/ColorThemeSelect";
 
 interface HeaderProps {
-  className?: string;
+  readonly className?: string;
 }
 
 export function Header({ className = "" }: HeaderProps) {

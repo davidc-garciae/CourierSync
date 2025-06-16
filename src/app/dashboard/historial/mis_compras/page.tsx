@@ -14,7 +14,7 @@ import {
 } from "@/components/molecules/basic/card";
 import { Skeleton } from "@/components/atoms/skeleton";
 import { Button } from "@/components/atoms/button";
-import { RefreshCCWDotIcon } from "@/components/ui/refresh-ccw-dot";
+import { RefreshCCWDotIcon } from "@/components/atoms/refresh-ccw-dot";
 import { useEnviosCliente } from "@/hooks/useEnviosCliente";
 
 function getBreadcrumbsFromNavigation() {
@@ -69,6 +69,166 @@ export default function MisComprasPage() {
     return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"; // Estado por defecto
   };
 
+  const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex flex-col gap-4">
+          <div
+            key="loading-skeleton-1"
+            className="p-4 border rounded-lg bg-muted/20"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col flex-1 gap-2 pt-1 md:flex-row md:items-center">
+                <Skeleton className="w-20 h-6 mb-1" />
+                <Skeleton className="w-24 h-6 mb-1" />
+                <Skeleton className="w-24 h-6 mb-1" />
+              </div>
+              <Skeleton className="w-20 h-5 rounded-full" />
+            </div>
+          </div>
+          <div
+            key="loading-skeleton-2"
+            className="p-4 border rounded-lg bg-muted/20"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col flex-1 gap-2 pt-1 md:flex-row md:items-center">
+                <Skeleton className="w-20 h-6 mb-1" />
+                <Skeleton className="w-24 h-6 mb-1" />
+                <Skeleton className="w-24 h-6 mb-1" />
+              </div>
+              <Skeleton className="w-20 h-5 rounded-full" />
+            </div>
+          </div>
+          <div
+            key="loading-skeleton-3"
+            className="p-4 border rounded-lg bg-muted/20"
+          >
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col flex-1 gap-2 pt-1 md:flex-row md:items-center">
+                <Skeleton className="w-20 h-6 mb-1" />
+                <Skeleton className="w-24 h-6 mb-1" />
+                <Skeleton className="w-24 h-6 mb-1" />
+              </div>
+              <Skeleton className="w-20 h-5 rounded-full" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
+          <span
+            className="text-lg font-semibold text-destructive"
+            role="alert"
+            aria-live="assertive"
+          >
+            ❌ {error}
+          </span>
+          <Button
+            onClick={refetch}
+            variant="outline"
+            className="flex items-center shadow-lg group"
+          >
+            Reintentar
+            <RefreshCCWDotIcon className="ml-2 transition-transform duration-300 group-hover:-animate-spin" />
+          </Button>
+        </div>
+      );
+    }
+
+    if (!hasEnvios) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
+          <div className="mb-4 text-6xl">📦</div>
+          <h3 className="text-xl font-semibold text-muted-foreground">
+            No tienes compras aún
+          </h3>
+          <p className="max-w-md text-sm text-muted-foreground">
+            Cuando realices tu primera compra, aquí podrás ver el historial y
+            seguimiento de todos tus envíos.
+          </p>
+        </div>
+      );
+    }
+
+    return (
+      <Accordion type="multiple" className="w-full">
+        {envios.map((envio) => (
+          <AccordionItem key={envio.id_envio} value={envio.id_envio}>
+            <AccordionTrigger>
+              <div className="flex items-center justify-between w-full gap-4">
+                <div className="flex flex-col flex-1 gap-2 md:flex-row md:items-center">
+                  <span className="font-medium">ID: {envio.id_envio}</span>
+                  <span className="text-muted-foreground">
+                    Guía: {envio.numeroGuia}
+                  </span>
+                  <span className="text-muted-foreground">
+                    Fecha: {envio.fechaCompra}
+                  </span>
+                </div>
+                <span
+                  className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getEstadoColor(
+                    envio.estado
+                  )}`}
+                >
+                  {envio.estado}
+                </span>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="grid grid-cols-1 gap-4 p-4 rounded-lg bg-muted/50 md:grid-cols-2">
+                <div>
+                  <span className="block text-sm text-muted-foreground">
+                    Dirección de envío
+                  </span>
+                  <span className="text-foreground">
+                    {envio.direccionEnvio}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-sm text-muted-foreground">
+                    Cliente
+                  </span>
+                  <span className="text-foreground">{envio.nombreCliente}</span>
+                </div>
+                <div>
+                  <span className="block text-sm text-muted-foreground">
+                    Precio
+                  </span>
+                  <span className="font-semibold text-green-600 dark:text-green-400">
+                    {formatPrecio(envio.precio)}
+                  </span>
+                </div>
+                <div>
+                  <span className="block text-sm text-muted-foreground">
+                    Estado actual
+                  </span>
+                  <span
+                    className={`inline-block px-2 py-1 rounded text-xs font-medium ${getEstadoColor(
+                      envio.estado
+                    )}`}
+                  >
+                    {envio.estado}
+                  </span>
+                </div>
+                <div className="md:col-span-2">
+                  <span className="block text-sm text-muted-foreground">
+                    Número de guía de seguimiento
+                  </span>
+                  <span className="px-2 py-1 font-mono text-sm border rounded bg-muted/60 dark:bg-muted/40 text-foreground border-border">
+                    {envio.numeroGuia}
+                  </span>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    );
+  };
+
   return (
     <>
       <DashboardHeader breadcrumbs={breadcrumbs} />
@@ -83,132 +243,9 @@ export default function MisComprasPage() {
                 {envios.length} {envios.length === 1 ? "envío" : "envíos"}{" "}
                 encontrados
               </p>
-            )}
+            )}{" "}
           </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex flex-col gap-4">
-                {[...Array(3)].map((_, idx) => (
-                  <div key={idx} className="p-4 border rounded-lg bg-muted/20">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex flex-col flex-1 gap-2 pt-1 md:flex-row md:items-center">
-                        <Skeleton className="w-20 h-6 mb-1" />
-                        <Skeleton className="w-24 h-6 mb-1" />
-                        <Skeleton className="w-24 h-6 mb-1" />
-                      </div>
-                      <Skeleton className="w-20 h-5 rounded-full" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-                <span
-                  className="text-lg font-semibold text-destructive"
-                  role="alert"
-                  aria-live="assertive"
-                >
-                  ❌ {error}
-                </span>
-                <Button
-                  onClick={refetch}
-                  variant="outline"
-                  className="flex items-center shadow-lg group"
-                >
-                  Reintentar
-                  <RefreshCCWDotIcon className="ml-2 transition-transform duration-300 group-hover:-animate-spin" />
-                </Button>
-              </div>
-            ) : !hasEnvios ? (
-              <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-                <div className="mb-4 text-6xl">📦</div>
-                <h3 className="text-xl font-semibold text-muted-foreground">
-                  No tienes compras aún
-                </h3>
-                <p className="max-w-md text-sm text-muted-foreground">
-                  Cuando realices tu primera compra, aquí podrás ver el
-                  historial y seguimiento de todos tus envíos.
-                </p>
-              </div>
-            ) : (
-              <Accordion type="multiple" className="w-full">
-                {envios.map((envio) => (
-                  <AccordionItem key={envio.id_envio} value={envio.id_envio}>
-                    <AccordionTrigger>
-                      <div className="flex items-center justify-between w-full gap-4">
-                        <div className="flex flex-col flex-1 gap-2 md:flex-row md:items-center">
-                          <span className="font-medium">
-                            ID: {envio.id_envio}
-                          </span>
-                          <span className="text-muted-foreground">
-                            Guía: {envio.numeroGuia}
-                          </span>
-                          <span className="text-muted-foreground">
-                            Fecha: {envio.fechaCompra}
-                          </span>
-                        </div>
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getEstadoColor(
-                            envio.estado
-                          )}`}
-                        >
-                          {envio.estado}
-                        </span>
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent>
-                      <div className="grid grid-cols-1 gap-4 p-4 rounded-lg bg-muted/50 md:grid-cols-2">
-                        <div>
-                          <span className="block text-sm text-muted-foreground">
-                            Dirección de envío
-                          </span>
-                          <span className="text-foreground">
-                            {envio.direccionEnvio}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="block text-sm text-muted-foreground">
-                            Cliente
-                          </span>
-                          <span className="text-foreground">
-                            {envio.nombreCliente}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="block text-sm text-muted-foreground">
-                            Precio
-                          </span>
-                          <span className="font-semibold text-green-600 dark:text-green-400">
-                            {formatPrecio(envio.precio)}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="block text-sm text-muted-foreground">
-                            Estado actual
-                          </span>
-                          <span
-                            className={`inline-block px-2 py-1 rounded text-xs font-medium ${getEstadoColor(
-                              envio.estado
-                            )}`}
-                          >
-                            {envio.estado}
-                          </span>
-                        </div>
-                        <div className="md:col-span-2">
-                          <span className="block text-sm text-muted-foreground">
-                            Número de guía de seguimiento
-                          </span>
-                          <span className="px-2 py-1 font-mono text-sm border rounded bg-muted/60 dark:bg-muted/40 text-foreground border-border">
-                            {envio.numeroGuia}
-                          </span>
-                        </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
-            )}
-          </CardContent>
+          <CardContent>{renderContent()}</CardContent>
         </Card>
       </div>
     </>

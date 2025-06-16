@@ -29,7 +29,7 @@ export function ConnectionStatus() {
         setError("");
       } catch (err: any) {
         setIsConnected(false);
-        setError(err.message || "Error de conexión");
+        setError(err.message ?? "Error de conexión");
         console.error("Error de conexión GraphQL:", err);
       }
     };

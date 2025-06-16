@@ -38,16 +38,16 @@ export function useEnviosCliente() {
     direccionEnvio: envio.direccionEnvio,
     fechaCompra: formatFecha(envio.fechaCompra),
     precio: envio.precio,
-    estado: envio.id_estado?.nombre || 'Sin estado',
-    nombreCliente: `${envio.id_cliente?.nombre || ''} ${envio.id_cliente?.apellido || ''}`.trim()
-  })) || [];
+    estado: envio.id_estado?.nombre ?? 'Sin estado',
+    nombreCliente: `${envio.id_cliente?.nombre ?? ''} ${envio.id_cliente?.apellido ?? ''}`.trim()
+  })) ?? [];
 
   const loading = profileLoading || enviosLoading;
 
   return {
     envios,
     loading,
-    error: error?.message || null,
+    error: error?.message ?? null,
     refetch,
     hasEnvios: envios.length > 0
   };

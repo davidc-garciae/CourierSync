@@ -33,7 +33,7 @@ export function StateEditorSheet({
   onSave,
   onCancel,
   onOpenChange,
-}: StateEditorSheetProps) {
+}: Readonly<StateEditorSheetProps>) {
   // Query para obtener los estados disponibles
   const { data: estadosData, loading: loadingEstados } = useQuery(
     LISTA_ESTADOS,
@@ -62,20 +62,20 @@ export function StateEditorSheet({
   return (
     <Sheet
       open={open}
-      onOpenChange={onOpenChange ? onOpenChange : (v) => !v && onCancel()}
+      onOpenChange={onOpenChange ?? ((v) => { if (!v) onCancel(); })}
     >
       <SheetContent side="right" className="w-full max-w-md">
         <SheetHeader>
           <SheetTitle>Editar estado del envío</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-4 mt-4">
-          <label className="font-medium">Estado actual</label>
+          <label htmlFor="estado-select" className="font-medium">Estado actual</label>
 
           {loadingEstados ? (
             <Skeleton className="h-10 w-full rounded" />
           ) : (
             <Select value={value} onValueChange={onChange}>
-              <SelectTrigger className="px-3 py-2 border rounded">
+              <SelectTrigger id="estado-select" className="px-3 py-2 border rounded">
                 <SelectValue placeholder="Seleccionar estado" />
               </SelectTrigger>
               <SelectContent>

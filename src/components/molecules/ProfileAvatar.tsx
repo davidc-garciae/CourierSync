@@ -41,11 +41,11 @@ export function ProfileAvatar({
   loading = false,
   className,
   variant = "default",
-}: ProfileAvatarProps) {
+}: Readonly<ProfileAvatarProps>) {
   // Generar iniciales
   const getInitials = () => {
-    const firstInitial = name?.[0]?.toUpperCase() || "";
-    const lastInitial = lastName?.[0]?.toUpperCase() || "";
+    const firstInitial = name?.[0]?.toUpperCase() ?? "";
+    const lastInitial = lastName?.[0]?.toUpperCase() ?? "";
     return firstInitial + lastInitial || "?";
   };
 

@@ -13,7 +13,7 @@ interface SidebarMenuListItem {
 }
 
 interface SidebarMenuListProps {
-  items: SidebarMenuListItem[];
+  readonly items: readonly SidebarMenuListItem[];
 }
 
 /**

@@ -9,7 +9,11 @@ import { AuthGuard } from "@/components/auth/AuthGuard";
 import { ReactNode } from "react";
 import { navigation_admin } from "@/lib/navigation_admin";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+export default function AdminLayout({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
   return (
     <AuthGuard requiredUserType="agente" redirectTo="/">
       <SidebarProvider className="">

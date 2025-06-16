@@ -8,7 +8,11 @@ import {
 import { AuthGuard } from "@/components/auth/AuthGuard";
 import { ReactNode } from "react";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default function DashboardLayout({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
   return (
     <AuthGuard requiredUserType="cliente" redirectTo="/">
       <SidebarProvider className="">

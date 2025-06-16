@@ -6,7 +6,7 @@ import { apolloClient } from "./apollo-client";
 export function ApolloProviderWrapper({
   children,
 }: {
-  children: React.ReactNode;
+  readonly children: React.ReactNode;
 }) {
   return <ApolloProvider client={apolloClient}>{children}</ApolloProvider>;
 }

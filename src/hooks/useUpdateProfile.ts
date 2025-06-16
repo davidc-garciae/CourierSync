@@ -132,7 +132,7 @@ export function useUpdateProfile() {
       } else if (err.message?.includes('Tipo de documento no encontrado')) {
         setError('Error en tipo de documento');
       } else {
-        setError(err.message || 'Error al actualizar perfil');
+        setError(err.message ?? 'Error al actualizar perfil');
       }
       
       return false;

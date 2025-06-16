@@ -68,7 +68,7 @@ export function useAuth() {
       console.error('Error en login:', err);
       return { 
         success: false, 
-        message: err.message || 'Error de conexión con el servidor' 
+        message: err.message ?? 'Error de conexión con el servidor' 
       };
     }
   };

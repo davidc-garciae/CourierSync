@@ -1,31 +1,33 @@
-'use client';
+"use client";
 
-import type { Variants } from 'motion/react';
-import { motion, useAnimation } from 'motion/react';
-import type { HTMLAttributes } from 'react';
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
-import { cn } from '@/lib/utils';
+import type { Variants } from "motion/react";
+import { motion, useAnimation } from "motion/react";
+import type { HTMLAttributes } from "react";
+import { forwardRef, useCallback, useImperativeHandle, useRef } from "react";
+import { cn } from "@/lib/utils";
 
-export interface LogoutIconHandle {
+export interface BadgeAlertIconHandle {
   startAnimation: () => void;
   stopAnimation: () => void;
 }
 
-interface LogoutIconProps extends HTMLAttributes<HTMLDivElement> {
+interface BadgeAlertIconProps extends HTMLAttributes<HTMLDivElement> {
   size?: number;
 }
 
-const pathVariants: Variants = {
+const iconVariants: Variants = {
+  normal: { scale: 1, rotate: 0 },
   animate: {
-    x: 2,
-    translateX: [0, -3, 0],
+    scale: [1, 1.1, 1.1, 1.1, 1],
+    rotate: [0, -3, 3, -2, 2, 0],
     transition: {
-      duration: 0.4,
+      duration: 0.5,
+      times: [0, 0.2, 0.4, 0.6, 1],
+      ease: "easeInOut",
     },
   },
 };
-
-const LogoutIcon = forwardRef<LogoutIconHandle, LogoutIconProps>(
+const BadgeAlertIcon = forwardRef<BadgeAlertIconHandle, BadgeAlertIconProps>(
   ({ onMouseEnter, onMouseLeave, className, size = 28, ...props }, ref) => {
     const controls = useAnimation();
     const isControlledRef = useRef(false);
@@ -34,15 +36,15 @@ const LogoutIcon = forwardRef<LogoutIconHandle, LogoutIconProps>(
       isControlledRef.current = true;
 
       return {
-        startAnimation: () => controls.start('animate'),
-        stopAnimation: () => controls.start('normal'),
+        startAnimation: () => controls.start("animate"),
+        stopAnimation: () => controls.start("normal"),
       };
     });
 
     const handleMouseEnter = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isControlledRef.current) {
-          controls.start('animate');
+          controls.start("animate");
         } else {
           onMouseEnter?.(e);
         }
@@ -53,7 +55,7 @@ const LogoutIcon = forwardRef<LogoutIconHandle, LogoutIconProps>(
     const handleMouseLeave = useCallback(
       (e: React.MouseEvent<HTMLDivElement>) => {
         if (!isControlledRef.current) {
-          controls.start('normal');
+          controls.start("normal");
         } else {
           onMouseLeave?.(e);
         }
@@ -68,7 +70,7 @@ const LogoutIcon = forwardRef<LogoutIconHandle, LogoutIconProps>(
         onMouseLeave={handleMouseLeave}
         {...props}
       >
-        <svg
+        <motion.svg
           xmlns="http://www.w3.org/2000/svg"
           width={size}
           height={size}
@@ -78,27 +80,18 @@ const LogoutIcon = forwardRef<LogoutIconHandle, LogoutIconProps>(
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          animate={controls}
+          variants={iconVariants}
         >
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-          <motion.polyline
-            points="16 17 21 12 16 7"
-            variants={pathVariants}
-            animate={controls}
-          />
-          <motion.line
-            x1="21"
-            x2="9"
-            y1="12"
-            y2="12"
-            variants={pathVariants}
-            animate={controls}
-          />
-        </svg>
+          <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" />
+          <line x1="12" x2="12" y1="8" y2="12" />
+          <line x1="12" x2="12.01" y1="16" y2="16" />
+        </motion.svg>
       </div>
     );
   }
 );
 
-LogoutIcon.displayName = 'LogoutIcon';
+BadgeAlertIcon.displayName = "BadgeAlertIcon";
 
-export { LogoutIcon };
+export { BadgeAlertIcon };

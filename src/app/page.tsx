@@ -64,12 +64,12 @@ export default function LoginPage() {
           </TabsList>
           <TabsContent value="usuario">
             <Card className="w-full max-w-md border shadow-xl backdrop-blur border-border">
-              <LoginForm role="usuario" />
+              <LoginForm role={role} />
             </Card>
           </TabsContent>
           <TabsContent value="admin">
             <Card className="w-full max-w-md border shadow-xl backdrop-blur border-border">
-              <LoginForm role="admin" />
+              <LoginForm role={role} />
             </Card>
           </TabsContent>
         </Tabs>
@@ -78,7 +78,7 @@ export default function LoginPage() {
   );
 }
 
-function LoginForm({ role }: { role: "usuario" | "admin" }) {
+function LoginForm({ role }: { readonly role: "usuario" | "admin" }) {
   const router = useRouter();
   const [error, setError] = useState("");
   const { login, loading } = useAuth();
@@ -102,13 +102,21 @@ function LoginForm({ role }: { role: "usuario" | "admin" }) {
           router.push("/admin");
         }
       } else {
-        setError(result.message || "Credenciales incorrectas");
+        setError(result.message ?? "Credenciales incorrectas");
       }
     } catch (err) {
       setError("Error de conexión con el servidor");
       console.error("Error en login:", err);
     }
   };
+
+  // Extract button text to avoid nested ternary
+  let buttonText = "Inicia Sesión";
+  if (loading) {
+    buttonText = "Ingresando...";
+  } else if (role === "admin") {
+    buttonText = "Inicia Sesión como Administrador";
+  }
 
   return (
     <>
@@ -135,11 +143,7 @@ function LoginForm({ role }: { role: "usuario" | "admin" }) {
             <Input type="password" placeholder="Contraseña" required />
           </div>
           <Button className="w-full" type="submit" disabled={loading}>
-            {loading
-              ? "Ingresando..."
-              : role === "admin"
-              ? "Inicia Sesión como Administrador"
-              : "Inicia Sesión"}
+            {buttonText}
           </Button>
         </form>
         <Separator className="my-6" />

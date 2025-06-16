@@ -10,9 +10,9 @@ export function middleware(request: NextRequest) {
 
   if (isProtectedRoute) {
     // Verificar si hay tokens de sesión en las cookies o headers
-    const hasUserType = request.cookies.get('userType')?.value || 
+    const hasUserType = request.cookies.get('userType')?.value ?? 
                        request.headers.get('x-user-type');
-    const hasAuthentication = request.cookies.get('isAuthenticated')?.value || 
+    const hasAuthentication = request.cookies.get('isAuthenticated')?.value ?? 
                              request.headers.get('x-authenticated');
 
     // Si no hay autenticación, redirigir al login

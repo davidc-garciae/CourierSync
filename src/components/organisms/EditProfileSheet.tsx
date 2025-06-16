@@ -9,9 +9,7 @@ import {
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { useUpdateProfile, UpdateProfileForm } from "@/hooks/useUpdateProfile";
-import { useAuthSession } from "@/hooks/useAuthSession";
 import { useState, useEffect } from "react";
 import { Label } from "@/components/atoms/label";
 import { Loader2, Shield } from "lucide-react";
@@ -31,7 +29,7 @@ export function EditProfileSheet({
   userProfile,
   onSuccess,
   targetUserType = "cliente",
-}: EditProfileSheetProps) {
+}: Readonly<EditProfileSheetProps>) {
   const [formData, setFormData] = useState<UpdateProfileForm>({
     name: "",
     apellido: "",
@@ -49,13 +47,13 @@ export function EditProfileSheet({
   useEffect(() => {
     if (open && userProfile) {
       setFormData({
-        name: userProfile.name || "",
-        apellido: userProfile.apellido || "",
-        direccion: userProfile.direccion || "",
-        phone: userProfile.phone || "",
-        email: userProfile.email || "",
-        tipoId: userProfile.tipoId || "",
-        numeroId: userProfile.numeroId || "",
+        name: userProfile.name ?? "",
+        apellido: userProfile.apellido ?? "",
+        direccion: userProfile.direccion ?? "",
+        phone: userProfile.phone ?? "",
+        email: userProfile.email ?? "",
+        tipoId: userProfile.tipoId ?? "",
+        numeroId: userProfile.numeroId ?? "",
       });
     }
   }, [open, userProfile]);
@@ -134,7 +132,7 @@ export function EditProfileSheet({
       onOpenChange(false);
       onSuccess?.();
     } else {
-      toast.error(error || "Error al actualizar el perfil");
+      toast.error(error ?? "Error al actualizar el perfil");
     }
   };
 
@@ -147,17 +145,8 @@ export function EditProfileSheet({
             Actualiza tu información personal. Los campos marcados con * son
             obligatorios.
           </p>
-
-          {/* Mensaje de seguridad */}
-          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
-            <Shield className="h-4 w-4 text-green-600" />
-            <span className="text-sm text-green-700">
-              ✅ Sin contraseña requerida - Actualización segura
-            </span>
-          </div>
         </DialogHeader>
-
-        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+        <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nombre *</Label>
@@ -237,7 +226,7 @@ export function EditProfileSheet({
           </div>
 
           {error && (
-            <div className="text-sm text-red-600 p-2 bg-red-50 border border-red-200 rounded">
+            <div className="p-2 text-sm text-red-600 border border-red-200 rounded bg-red-50">
               ❌ {error}
             </div>
           )}
@@ -259,7 +248,7 @@ export function EditProfileSheet({
             >
               {loading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Actualizando...
                 </>
               ) : (

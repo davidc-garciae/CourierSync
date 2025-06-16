@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { getSession } from "@/lib/utils/auth";
 
 interface AuthGuardProps {
-  children: React.ReactNode;
-  requiredUserType?: "cliente" | "agente" | "any";
-  redirectTo?: string;
+  readonly children: React.ReactNode;
+  readonly requiredUserType?: "cliente" | "agente" | "any";
+  readonly redirectTo?: string;
 }
 
 export function AuthGuard({

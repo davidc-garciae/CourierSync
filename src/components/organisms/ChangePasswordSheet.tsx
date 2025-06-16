@@ -11,7 +11,11 @@ import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { toast } from "sonner";
 
-export function ChangePasswordSheet({ trigger }: { trigger: React.ReactNode }) {
+export function ChangePasswordSheet({
+  trigger,
+}: {
+  readonly trigger: React.ReactNode;
+}) {
   const [open, setOpen] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
 
@@ -60,7 +64,7 @@ export function ChangePasswordSheet({ trigger }: { trigger: React.ReactNode }) {
       <SheetContent side="right" className="w-full max-w-md">
         <SheetHeader>
           <SheetTitle>Cambiar contraseña</SheetTitle>
-          <div className="p-3 text-sm rounded-lg bg-blue-50 text-blue-800 border border-blue-200">
+          <div className="p-3 text-sm text-blue-800 border border-blue-200 rounded-lg bg-blue-50">
             ℹ️ <strong>Simulado:</strong> Esta funcionalidad no está conectada
             al backend. Los cambios solo son demostrativos.
           </div>

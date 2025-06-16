@@ -11,9 +11,6 @@ import { Separator } from "@/components/atoms/separator";
 import { SidebarTrigger } from "@/components/organisms/basic/sidebar";
 import { ThemeToggleButton } from "../atoms/ThemeToggleButton";
 import { ColorThemeSelect } from "../molecules/ColorThemeSelect";
-import { Button } from "@/components/atoms/button";
-import { LogOut } from "lucide-react";
-import { useAuthSession } from "@/hooks/useAuthSession";
 import Link from "next/link";
 
 export interface DashboardHeaderProps {
@@ -29,7 +26,9 @@ export interface DashboardHeaderProps {
  * Molecule que representa el header del dashboard con trigger de sidebar, separador y breadcrumbs dinámicos.
  * @param breadcrumbs Array de objetos con label, href y si es la página actual.
  */
-export function DashboardHeader({ breadcrumbs }: DashboardHeaderProps) {
+export function DashboardHeader({
+  breadcrumbs,
+}: Readonly<DashboardHeaderProps>) {
   return (
     <header className="sticky flex items-center h-16 gap-2 px-4 border-b bg-background shrink-0">
       <SidebarTrigger className="-ml-1" />
@@ -44,8 +43,8 @@ export function DashboardHeader({ breadcrumbs }: DashboardHeaderProps) {
                 {crumb.isCurrentPage ? (
                   <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
                 ) : (
-                  <BreadcrumbLink asChild href={crumb.href || "#"}>
-                    <Link href={crumb.href || "#"}>{crumb.label}</Link>
+                  <BreadcrumbLink asChild href={crumb.href ?? "#"}>
+                    <Link href={crumb.href ?? "#"}>{crumb.label}</Link>
                   </BreadcrumbLink>
                 )}
               </BreadcrumbItem>

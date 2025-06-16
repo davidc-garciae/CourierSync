@@ -25,7 +25,7 @@ export function useSatisfacciones() {
   });
 
   return {
-    satisfacciones: data?.listaSatisfacciones || [],
+    satisfacciones: data?.listaSatisfacciones ?? [],
     loading,
     error,
     refetch,
@@ -41,7 +41,7 @@ export function useSatisfaccionesPorFecha(fechaInicio: string, fechaFin: string)
   });
 
   return {
-    satisfacciones: data?.satisfaccionesPorFecha || [],
+    satisfacciones: data?.satisfaccionesPorFecha ?? [],
     loading,
     error,
     refetch,
@@ -93,11 +93,20 @@ export function calcularEstadisticas(satisfacciones: SatisfaccionData[]) {
   const comentarios = satisfacciones.filter(item => item.comentario_satisfaccion?.trim().length > 0).length;
   const satisfaccionAlta = satisfacciones.filter(s => s.calificacion >= 4).length;
   
+  let tendencia: number;
+  if (promedio >= 4) {
+    tendencia = 12;
+  } else if (promedio >= 3) {
+    tendencia = 5;
+  } else {
+    tendencia = -8;
+  }
+
   return {
     promedio: Math.round(promedio * 100) / 100,
     total: satisfacciones.length,
     comentarios,
     satisfaccionAlta,
-    tendencia: promedio >= 4 ? 12 : promedio >= 3 ? 5 : -8
+    tendencia
   };
 } 

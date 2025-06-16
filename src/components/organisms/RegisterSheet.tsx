@@ -10,7 +10,6 @@ import {
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { useRegister } from "@/hooks/useRegister";
 import {
   Select,
@@ -20,7 +19,11 @@ import {
   SelectItem,
 } from "@/components/molecules/basic/select";
 
-export function RegisterSheet({ trigger }: { trigger: React.ReactNode }) {
+export function RegisterSheet({
+  trigger,
+}: {
+  readonly trigger: React.ReactNode;
+}) {
   const [open, setOpen] = React.useState(false);
   const { register, loading } = useRegister();
   const [form, setForm] = React.useState({

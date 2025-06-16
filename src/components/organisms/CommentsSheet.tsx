@@ -28,7 +28,7 @@ export function CommentsSheet({
   comentarios,
   onAddComentario,
   loading = false,
-}: CommentsSheetProps) {
+}: Readonly<CommentsSheetProps>) {
   const [comentForm, setComentForm] = useState("");
   const comentariosEndRef = useRef<HTMLDivElement>(null);
 
@@ -42,6 +42,36 @@ export function CommentsSheet({
     }
   }, [comentarios.length, open]);
 
+  const renderComments = () => {
+    if (loading) {
+      return <Skeleton className="w-full h-20 rounded" />;
+    }
+    if (comentarios.length === 0) {
+      return (
+        <span className="text-muted-foreground">Sin comentarios aún.</span>
+      );
+    }
+    return (
+      <>
+        {comentarios.map((c) => (
+          <div
+            key={`${c.autor}-${c.fecha}-${c.texto.slice(0, 10)}`}
+            className="p-2 border rounded bg-muted/50"
+          >
+            <div className="flex items-center justify-between mb-1 text-xs text-muted-foreground">
+              <span>{c.autor}</span>
+              <span>{c.fecha}</span>
+            </div>
+            <div className="text-sm break-words whitespace-pre-line">
+              {c.texto}
+            </div>
+          </div>
+        ))}
+        <div ref={comentariosEndRef} />
+      </>
+    );
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="w-full max-w-md">
@@ -49,26 +79,7 @@ export function CommentsSheet({
           <SheetTitle>Comentarios del pedido</SheetTitle>
         </SheetHeader>
         <div className="flex flex-col gap-4 mt-4 max-h-[60vh] overflow-y-auto">
-          {loading ? (
-            <Skeleton className="w-full h-20 rounded" />
-          ) : comentarios.length === 0 ? (
-            <span className="text-muted-foreground">Sin comentarios aún.</span>
-          ) : (
-            <>
-              {comentarios.map((c, idx) => (
-                <div key={idx} className="p-2 border rounded bg-muted/50">
-                  <div className="flex items-center justify-between mb-1 text-xs text-muted-foreground">
-                    <span>{c.autor}</span>
-                    <span>{c.fecha}</span>
-                  </div>
-                  <div className="text-sm break-words whitespace-pre-line">
-                    {c.texto}
-                  </div>
-                </div>
-              ))}
-              <div ref={comentariosEndRef} />
-            </>
-          )}
+          {renderComments()}
         </div>
         <div className="mt-6">
           <textarea

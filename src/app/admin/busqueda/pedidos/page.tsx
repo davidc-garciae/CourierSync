@@ -125,7 +125,7 @@ export default function BusquedaPedidosAdminPage() {
     },
   });
 
-  const envios: Envio[] = data?.obtenerEnvios || [];
+  const envios: Envio[] = data?.obtenerEnvios ?? [];
 
   // Función de búsqueda
   const handleSearch = () => {
@@ -144,7 +144,7 @@ export default function BusquedaPedidosAdminPage() {
         envio.id_cliente?.apellido || ""
       }`.toLowerCase();
       const clienteEmail =
-        envio.id_cliente?.correoElectronico?.toLowerCase() || "";
+        envio.id_cliente?.correoElectronico?.toLowerCase() ?? "";
       const estado = envio.id_estado?.nombre?.toLowerCase() || "";
 
       return (
@@ -241,14 +241,19 @@ export default function BusquedaPedidosAdminPage() {
 
             {loadingEnvios && (
               <div className="flex flex-col gap-2 mt-4">
-                {[...Array(3)].map((_, i) => (
-                  <Skeleton key={i} className="w-full h-16 rounded" />
-                ))}
+                {[...Array(3)].map(() => {
+                  const uniqueKey = `skeleton-loading-${Math.random()
+                    .toString(36)
+                    .slice(2, 11)}`;
+                  return (
+                    <Skeleton key={uniqueKey} className="w-full h-16 rounded" />
+                  );
+                })}
               </div>
             )}
 
             {error && (
-              <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <div className="p-4 mt-4 border border-red-200 rounded-lg bg-red-50 dark:bg-red-900/20 dark:border-red-800">
                 <p className="font-medium text-red-800 dark:text-red-300">
                   ❌ Error al cargar envíos: {error.message}
                 </p>
@@ -363,9 +368,9 @@ export default function BusquedaPedidosAdminPage() {
 
             {!showResults && !loadingEnvios && envios.length > 0 && (
               <div className="mt-8 text-center text-muted-foreground">
-                <div className="text-4xl mb-2">📦</div>
+                <div className="mb-2 text-4xl">📦</div>
                 <p>Escribe al menos 2 caracteres para buscar envíos</p>
-                <p className="text-sm mt-1">
+                <p className="mt-1 text-sm">
                   Puedes buscar por ID, guía, cliente, email o estado
                 </p>
               </div>

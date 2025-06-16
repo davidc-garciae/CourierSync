@@ -24,7 +24,7 @@ export function usePromocionesPorCliente(id_cliente: number) {
   });
 
   return {
-    promociones: data?.promocionesPorCliente || [],
+    promociones: data?.promocionesPorCliente ?? [],
     loading,
     error,
     refetch,
