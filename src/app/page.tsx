@@ -20,6 +20,8 @@ import {
 import { Header } from "@/components/organisms/header";
 import { RegisterSheet } from "@/components/organisms/RegisterSheet";
 import { AppInfoSheet } from "@/components/organisms/AppInfoSheet";
+import { useAuth } from "@/hooks/useAuth";
+import { ConnectionStatus } from "@/components/debug/ConnectionStatus";
 
 export default function LoginPage() {
   const [mounted, setMounted] = useState(false);
@@ -37,6 +39,10 @@ export default function LoginPage() {
   return (
     <div className="flex flex-col w-full min-h-screen bg-gradient-to-br from-primary/50 to-background">
       <Header className="sticky top-0 z-50" />
+      {/* Estado de conexión con el backend */}
+      <div className="flex justify-center p-2">
+        <ConnectionStatus />
+      </div>
       <div className="flex items-center justify-center flex-1 w-full">
         <div className="absolute z-50 bottom-4 right-4">
           <AppInfoSheet
@@ -75,46 +81,32 @@ export default function LoginPage() {
 function LoginForm({ role }: { role: "usuario" | "admin" }) {
   const router = useRouter();
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  // Simulación de API
-  async function fakeLoginApi(
-    email: string,
-    password: string,
-    role: "usuario" | "admin"
-  ) {
-    return new Promise<{ success: boolean; message?: string }>((resolve) => {
-      setTimeout(() => {
-        if (
-          (role === "usuario" && email === "User" && password === "User") ||
-          (role === "admin" && email === "Admin" && password === "Admin")
-        ) {
-          resolve({ success: true });
-        } else {
-          resolve({ success: false, message: "Credenciales equivocadas" });
-        }
-      }, 100);
-    });
-  }
+  const { login, loading } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+
     const form = e.currentTarget;
     const email = (form.elements[0] as HTMLInputElement).value;
     const password = (form.elements[1] as HTMLInputElement).value;
-    const result = await fakeLoginApi(email, password, role);
-    setLoading(false);
-    if (result.success) {
-      if (role === "usuario") {
-        router.push("/dashboard");
+
+    try {
+      const result = await login(email, password, role);
+
+      if (result.success) {
+        if (role === "usuario") {
+          router.push("/dashboard");
+        } else {
+          // Redirige a panel admin si lo tienes
+          router.push("/admin");
+        }
       } else {
-        // Redirige a panel admin si lo tienes
-        router.push("/admin");
+        setError(result.message || "Credenciales incorrectas");
       }
-    } else {
-      setError(result.message || "Credenciales equivocadas");
+    } catch (err) {
+      setError("Error de conexión con el servidor");
+      console.error("Error en login:", err);
     }
   };
 

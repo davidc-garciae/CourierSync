@@ -1,25 +1,23 @@
 "use client";
 import React from "react";
 import { UserDropdownMenu } from "@/components/molecules/UserDropdownMenu";
+import { useAuthSession } from "@/hooks/useAuthSession";
 
 interface SidebarUserMenuProps {
   user: {
     name: string;
     email: string;
     avatar: string;
+    userType?: "cliente" | "agente";
   };
 }
 
 export const SidebarUserMenu: React.FC<SidebarUserMenuProps> = ({ user }) => {
-  // Cerrar sesión: limpia storage y redirige a home
+  const { logout } = useAuthSession();
+
+  // Cerrar sesión usando nuestro sistema de autenticación
   const handleLogout = () => {
-    if (typeof window !== "undefined") {
-      // Elimina solo las claves de sesión/autenticación, NO el theme ni color
-      localStorage.removeItem("auth-token"); // ejemplo, ajusta según tu clave real
-      localStorage.removeItem("user-session"); // ejemplo, ajusta según tu clave real
-      sessionStorage.clear();
-      window.location.href = "/";
-    }
+    logout(); // Esto limpiará localStorage, cookies y redirigirá
   };
 
   return (

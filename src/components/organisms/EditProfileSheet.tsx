@@ -1,172 +1,274 @@
 "use client";
 import * as React from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/organisms/basic/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/organisms/basic/dialog";
 import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useUpdateProfile, UpdateProfileForm } from "@/hooks/useUpdateProfile";
+import { useAuthSession } from "@/hooks/useAuthSession";
+import { useState, useEffect } from "react";
+import { Label } from "@/components/atoms/label";
+import { Loader2, Shield } from "lucide-react";
+import { UserProfile } from "@/hooks/useUserProfile";
+
+interface EditProfileSheetProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  userProfile: UserProfile | null;
+  onSuccess?: () => void;
+  targetUserType?: "cliente" | "agente";
+}
 
 export function EditProfileSheet({
-  user,
-  isAdmin = false,
-  trigger,
-}: {
-  user: {
-    id: string;
-    name: string;
-    apellido: string;
-    direccion: string;
-    phone: string;
-    email: string;
-    tipoId?: string;
-    numeroId?: string;
-    avatar?: string;
-  };
-  isAdmin?: boolean;
-  trigger?: React.ReactNode;
-}) {
-  const [open, setOpen] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
-  const [success, setSuccess] = React.useState(false);
-  const [form, setForm] = React.useState({
-    name: user.name || "",
-    apellido: user.apellido || "",
-    direccion: user.direccion || "",
-    phone: user.phone || "",
-    email: user.email || "",
-    tipoId: user.tipoId || "",
-    numeroId: user.numeroId || "",
+  open,
+  onOpenChange,
+  userProfile,
+  onSuccess,
+  targetUserType = "cliente",
+}: EditProfileSheetProps) {
+  const [formData, setFormData] = useState<UpdateProfileForm>({
+    name: "",
+    apellido: "",
+    direccion: "",
+    phone: "",
+    email: "",
+    tipoId: "",
+    numeroId: "",
   });
 
-  React.useEffect(() => {
-    setForm({
-      name: user.name || "",
-      apellido: user.apellido || "",
-      direccion: user.direccion || "",
-      phone: user.phone || "",
-      email: user.email || "",
-      tipoId: user.tipoId || "",
-      numeroId: user.numeroId || "",
-    });
-  }, [user]);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const { updateProfile, loading, error } = useUpdateProfile();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+  // Cargar datos del perfil cuando abra el sheet
+  useEffect(() => {
+    if (open && userProfile) {
+      setFormData({
+        name: userProfile.name || "",
+        apellido: userProfile.apellido || "",
+        direccion: userProfile.direccion || "",
+        phone: userProfile.phone || "",
+        email: userProfile.email || "",
+        tipoId: userProfile.tipoId || "",
+        numeroId: userProfile.numeroId || "",
+      });
+    }
+  }, [open, userProfile]);
+
+  // Validación de email en tiempo real
+  const validateEmail = (email: string): string | null => {
+    if (!email) return "El email es requerido";
+
+    const trimmedEmail = email.trim();
+    if (trimmedEmail !== email) {
+      return "El email no puede contener espacios al inicio o final";
+    }
+
+    if (email.includes(" ")) {
+      return "El email no puede contener espacios";
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return "El formato del email no es válido";
+    }
+
+    return null;
   };
 
-  // Simula una solicitud POST al guardar
+  const handleEmailChange = (value: string) => {
+    setFormData((prev) => ({ ...prev, email: value }));
+    setEmailError(validateEmail(value));
+  };
+
+  const handleInputChange = (field: keyof UpdateProfileForm, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setSuccess(false);
-    setTimeout(() => {
-      if (Math.random() < 0.2) {
-        setSaving(false);
-        setSuccess(false);
-        toast.error("Error al actualizar el perfil", {
-          description: "Ocurrió un error inesperado. Intenta nuevamente.",
-          className: "text-destructive",
-        });
-        return;
-      }
-      setSaving(false);
-      setSuccess(true);
-      setOpen(false); // Cierra el sheet
-      toast.success(
-        isAdmin ? "Perfil de usuario actualizado" : "Perfil actualizado",
-        {
-          description: format(new Date(), "PPPP 'a las' p"),
-        }
-      );
-    }, 1200);
+
+    if (!userProfile?.id) {
+      toast.error("No se pudo identificar el usuario");
+      return;
+    }
+
+    // Validar email antes de enviar
+    const emailValidationError = validateEmail(formData.email);
+    if (emailValidationError) {
+      setEmailError(emailValidationError);
+      toast.error(emailValidationError);
+      return;
+    }
+
+    // Validar que todos los campos requeridos estén llenos
+    if (
+      !formData.name.trim() ||
+      !formData.apellido.trim() ||
+      !formData.email.trim()
+    ) {
+      toast.error("Por favor completa todos los campos requeridos");
+      return;
+    }
+
+    console.log("🚀 Enviando formulario de actualización:", {
+      formData,
+      targetUserType,
+      userProfileId: userProfile.id,
+    });
+
+    // Pasar el targetUserType al hook
+    const success = await updateProfile(
+      userProfile.id,
+      formData,
+      targetUserType
+    );
+
+    if (success) {
+      toast.success("¡Perfil actualizado exitosamente!");
+      onOpenChange(false);
+      onSuccess?.();
+    } else {
+      toast.error(error || "Error al actualizar el perfil");
+    }
   };
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        {trigger || <Button variant="outline">Editar perfil</Button>}
-      </SheetTrigger>
-      <SheetContent side="right" className="w-full max-w-md">
-        <SheetHeader>
-          <SheetTitle>
-            {isAdmin ? "Editar perfil de usuario" : "Editar perfil"}
-          </SheetTitle>
-        </SheetHeader>
-        <form
-          className="flex flex-col gap-4 mt-4"
-          onSubmit={handleSubmit}
-          autoComplete="off"
-        >
-          <label>
-            Nombre
-            <Input name="name" value={form.name} onChange={handleChange} />
-          </label>
-          <label>
-            Apellido
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="w-full max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Editar Perfil</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            Actualiza tu información personal. Los campos marcados con * son
+            obligatorios.
+          </p>
+
+          {/* Mensaje de seguridad */}
+          <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <Shield className="h-4 w-4 text-green-600" />
+            <span className="text-sm text-green-700">
+              ✅ Sin contraseña requerida - Actualización segura
+            </span>
+          </div>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nombre *</Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+                placeholder="Tu nombre"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="apellido">Apellido *</Label>
+              <Input
+                id="apellido"
+                value={formData.apellido}
+                onChange={(e) => handleInputChange("apellido", e.target.value)}
+                placeholder="Tu apellido"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
             <Input
-              name="apellido"
-              value={form.apellido}
-              onChange={handleChange}
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => handleEmailChange(e.target.value)}
+              placeholder="tu@email.com"
+              required
+              className={emailError ? "border-red-500" : ""}
             />
-          </label>
-          <label>
-            Dirección
+            {emailError && <p className="text-sm text-red-600">{emailError}</p>}
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Teléfono</Label>
             <Input
-              name="direccion"
-              value={form.direccion}
-              onChange={handleChange}
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => handleInputChange("phone", e.target.value)}
+              placeholder="Tu número de teléfono"
             />
-          </label>
-          <label>
-            Número de celular
-            <Input name="phone" value={form.phone} onChange={handleChange} />
-          </label>
-          <label>
-            Correo electrónico
-            <Input name="email" value={form.email} onChange={handleChange} />
-          </label>
-          {isAdmin && (
-            <>
-              <label>
-                Tipo de ID
-                <Input
-                  name="tipoId"
-                  value={form.tipoId}
-                  onChange={handleChange}
-                />
-              </label>
-              <label>
-                Número de ID
-                <Input
-                  name="numeroId"
-                  value={form.numeroId}
-                  onChange={handleChange}
-                />
-              </label>
-            </>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="direccion">Dirección</Label>
+            <Input
+              id="direccion"
+              value={formData.direccion}
+              onChange={(e) => handleInputChange("direccion", e.target.value)}
+              placeholder="Tu dirección"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="tipoId">Tipo de ID</Label>
+              <Input
+                id="tipoId"
+                value={formData.tipoId}
+                onChange={(e) => handleInputChange("tipoId", e.target.value)}
+                placeholder="Ej: Cédula"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="numeroId">Número de ID</Label>
+              <Input
+                id="numeroId"
+                value={formData.numeroId}
+                onChange={(e) => handleInputChange("numeroId", e.target.value)}
+                placeholder="Tu número de identificación"
+              />
+            </div>
+          </div>
+
+          {error && (
+            <div className="text-sm text-red-600 p-2 bg-red-50 border border-red-200 rounded">
+              ❌ {error}
+            </div>
           )}
-          <div className="flex gap-2 mt-4">
-            <Button type="submit" className="w-full" disabled={saving}>
-              {saving ? "Guardando..." : "Guardar cambios"}
-            </Button>
+
+          <div className="flex gap-2 pt-4">
             <Button
               type="button"
-              variant="secondary"
-              className="w-full"
-              onClick={() => setOpen(false)}
-              disabled={saving}
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+              className="flex-1"
             >
               Cancelar
             </Button>
+            <Button
+              type="submit"
+              disabled={loading || !!emailError}
+              className="flex-1"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Actualizando...
+                </>
+              ) : (
+                "Guardar Cambios"
+              )}
+            </Button>
           </div>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }

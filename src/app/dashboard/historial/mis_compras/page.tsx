@@ -13,7 +13,9 @@ import {
   CardContent,
 } from "@/components/molecules/basic/card";
 import { Skeleton } from "@/components/atoms/skeleton";
-import { useEffect, useState } from "react";
+import { Button } from "@/components/atoms/button";
+import { RefreshCCWDotIcon } from "@/components/ui/refresh-ccw-dot";
+import { useEnviosCliente } from "@/hooks/useEnviosCliente";
 
 function getBreadcrumbsFromNavigation() {
   return [
@@ -21,36 +23,51 @@ function getBreadcrumbsFromNavigation() {
     { label: "Mis compras", isCurrentPage: true },
   ];
 }
-import { Button } from "@/components/atoms/button";
-import { RefreshCCWDotIcon } from "@/components/ui/refresh-ccw-dot";
 
 export default function MisComprasPage() {
   const breadcrumbs = getBreadcrumbsFromNavigation();
-  const [compras, setCompras] = useState<typeof comprasData>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { envios, loading, error, refetch, hasEnvios } = useEnviosCliente();
 
-  // Lógica de carga extraída a función reutilizable
-  function fetchCompras() {
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      // Simulación de error con 20% de probabilidad
-      if (Math.random() < 0.2) {
-        setError(
-          "No se pudieron cargar las compras. Por favor, inténtalo de nuevo más tarde."
-        );
-        setLoading(false);
-        return;
-      }
-      setCompras(comprasData);
-      setLoading(false);
-    }, 1200);
-  }
+  // Función para formatear precio
+  const formatPrecio = (precio: number): string => {
+    return new Intl.NumberFormat("es-CO", {
+      style: "currency",
+      currency: "COP",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(precio);
+  };
 
-  useEffect(() => {
-    fetchCompras();
-  }, []);
+  // Función para obtener colores según estado (adaptable a tema claro/oscuro)
+  const getEstadoColor = (estado: string): string => {
+    const estadoLower = estado.toLowerCase();
+    if (
+      estadoLower.includes("entregado") ||
+      estadoLower.includes("completado")
+    ) {
+      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+    }
+    if (
+      estadoLower.includes("viaje") ||
+      estadoLower.includes("proceso") ||
+      estadoLower.includes("enviado")
+    ) {
+      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+    }
+    if (
+      estadoLower.includes("cancelado") ||
+      estadoLower.includes("rechazado")
+    ) {
+      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+    }
+    if (
+      estadoLower.includes("pendiente") ||
+      estadoLower.includes("esperando")
+    ) {
+      return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+    }
+    return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"; // Estado por defecto
+  };
 
   return (
     <>
@@ -61,15 +78,18 @@ export default function MisComprasPage() {
             <CardTitle className="mb-2 text-2xl font-bold text-center">
               Mis compras
             </CardTitle>
+            {!loading && hasEnvios && (
+              <p className="text-sm text-muted-foreground">
+                {envios.length} {envios.length === 1 ? "envío" : "envíos"}{" "}
+                encontrados
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="flex flex-col gap-4">
                 {[...Array(3)].map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="p-2 border-t-0 border-y -2 bg-muted/"
-                  >
+                  <div key={idx} className="p-4 border rounded-lg bg-muted/20">
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex flex-col flex-1 gap-2 pt-1 md:flex-row md:items-center">
                         <Skeleton className="w-20 h-6 mb-1" />
@@ -88,10 +108,10 @@ export default function MisComprasPage() {
                   role="alert"
                   aria-live="assertive"
                 >
-                  {error}
+                  ❌ {error}
                 </span>
                 <Button
-                  onClick={fetchCompras}
+                  onClick={refetch}
                   variant="outline"
                   className="flex items-center shadow-lg group"
                 >
@@ -99,29 +119,40 @@ export default function MisComprasPage() {
                   <RefreshCCWDotIcon className="ml-2 transition-transform duration-300 group-hover:-animate-spin" />
                 </Button>
               </div>
+            ) : !hasEnvios ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
+                <div className="mb-4 text-6xl">📦</div>
+                <h3 className="text-xl font-semibold text-muted-foreground">
+                  No tienes compras aún
+                </h3>
+                <p className="max-w-md text-sm text-muted-foreground">
+                  Cuando realices tu primera compra, aquí podrás ver el
+                  historial y seguimiento de todos tus envíos.
+                </p>
+              </div>
             ) : (
               <Accordion type="multiple" className="w-full">
-                {compras.map((compra) => (
-                  <AccordionItem key={compra.id_envio} value={compra.id_envio}>
+                {envios.map((envio) => (
+                  <AccordionItem key={envio.id_envio} value={envio.id_envio}>
                     <AccordionTrigger>
                       <div className="flex items-center justify-between w-full gap-4">
                         <div className="flex flex-col flex-1 gap-2 md:flex-row md:items-center">
                           <span className="font-medium">
-                            ID: {compra.id_envio}
+                            ID: {envio.id_envio}
                           </span>
                           <span className="text-muted-foreground">
-                            Guía: {compra.numero_guia}
+                            Guía: {envio.numeroGuia}
                           </span>
                           <span className="text-muted-foreground">
-                            Fecha: {compra.fecha_compra}
+                            Fecha: {envio.fechaCompra}
                           </span>
                         </div>
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${
-                            estadoColor[compra.estado]
-                          }`}
+                          className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${getEstadoColor(
+                            envio.estado
+                          )}`}
                         >
-                          {compra.estado}
+                          {envio.estado}
                         </span>
                       </div>
                     </AccordionTrigger>
@@ -129,27 +160,47 @@ export default function MisComprasPage() {
                       <div className="grid grid-cols-1 gap-4 p-4 rounded-lg bg-muted/50 md:grid-cols-2">
                         <div>
                           <span className="block text-sm text-muted-foreground">
-                            Dirección
+                            Dirección de envío
                           </span>
-                          <span>{compra.direccion}</span>
+                          <span className="text-foreground">
+                            {envio.direccionEnvio}
+                          </span>
                         </div>
                         <div>
                           <span className="block text-sm text-muted-foreground">
-                            Nombre del cliente
+                            Cliente
                           </span>
-                          <span>{compra.nombre_cliente}</span>
+                          <span className="text-foreground">
+                            {envio.nombreCliente}
+                          </span>
                         </div>
                         <div>
                           <span className="block text-sm text-muted-foreground">
                             Precio
                           </span>
-                          <span>{compra.precio}</span>
+                          <span className="font-semibold text-green-600 dark:text-green-400">
+                            {formatPrecio(envio.precio)}
+                          </span>
                         </div>
                         <div>
                           <span className="block text-sm text-muted-foreground">
-                            Recibo
+                            Estado actual
                           </span>
-                          <span>{compra.recibo}</span>
+                          <span
+                            className={`inline-block px-2 py-1 rounded text-xs font-medium ${getEstadoColor(
+                              envio.estado
+                            )}`}
+                          >
+                            {envio.estado}
+                          </span>
+                        </div>
+                        <div className="md:col-span-2">
+                          <span className="block text-sm text-muted-foreground">
+                            Número de guía de seguimiento
+                          </span>
+                          <span className="px-2 py-1 font-mono text-sm border rounded bg-muted/60 dark:bg-muted/40 text-foreground border-border">
+                            {envio.numeroGuia}
+                          </span>
                         </div>
                       </div>
                     </AccordionContent>
@@ -163,43 +214,3 @@ export default function MisComprasPage() {
     </>
   );
 }
-
-// Datos simulados fuera del componente para evitar recreación en cada render
-const comprasData = [
-  {
-    id_envio: "001",
-    numero_guia: "A123456",
-    fecha_compra: "2024-05-01",
-    estado: "En viaje" as const,
-    direccion: "Calle 123 #45-67, Ciudad",
-    nombre_cliente: "David García",
-    precio: "$50.000",
-    recibo: "#REC-001",
-  },
-  {
-    id_envio: "002",
-    numero_guia: "B654321",
-    fecha_compra: "2024-04-20",
-    estado: "Entregado" as const,
-    direccion: "Carrera 45 #67-89, Ciudad",
-    nombre_cliente: "David García",
-    precio: "$75.000",
-    recibo: "#REC-002",
-  },
-  {
-    id_envio: "003",
-    numero_guia: "C789012",
-    fecha_compra: "2024-03-15",
-    estado: "Cancelado" as const,
-    direccion: "Avenida 10 #20-30, Ciudad",
-    nombre_cliente: "David García",
-    precio: "$60.000",
-    recibo: "#REC-003",
-  },
-];
-
-const estadoColor = {
-  "En viaje": "bg-blue-100 text-blue-700",
-  Entregado: "bg-green-100 text-green-700",
-  Cancelado: "bg-red-100 text-red-700",
-} as const;

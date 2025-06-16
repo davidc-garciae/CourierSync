@@ -1,11 +1,17 @@
 [![Deploy to Vercel](https://github.com/davidc-garciae/CourierSync/actions/workflows/deploy-vercel.yml/badge.svg?branch=main)](https://github.com/davidc-garciae/CourierSync/actions/workflows/deploy-vercel.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=david-garciae_couriersync-frontend&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=david-garciae_couriersync-frontend)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=david-garciae_couriersync-frontend&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=david-garciae_couriersync-frontend)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=david-garciae_couriersync-frontend&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=david-garciae_couriersync-frontend)
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=david-garciae_couriersync-frontend&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=david-garciae_couriersync-frontend)
+[![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=david-garciae_couriersync-frontend&metric=ncloc)](https://sonarcloud.io/summary/new_code?id=david-garciae_couriersync-frontend)
 
 # Dashboard Administrativo Next.js + Tailwind (Atomic Design)
 
-Este proyecto es un dashboard administrativo construido con Next.js y Tailwind CSS, siguiendo la metodología Atomic Design. Permite buscar, editar y gestionar usuarios y pedidos, con una experiencia de usuario moderna, feedback visual, animaciones y despliegue automático en Vercel.
+Este proyecto es un dashboard administrativo avanzado construido con Next.js 15, TypeScript y Tailwind CSS, siguiendo la metodología Atomic Design. Presenta una arquitectura escalable para gestión de usuarios, pedidos, promociones y análisis de satisfacción, con una experiencia de usuario moderna, accesibilidad mejorada y despliegue automático.
 
 ## Tabla de Contenidos
 
+- [Arquitectura y Funcionamiento](#arquitectura-y-funcionamiento)
 - [Características](#características)
 - [Estructura del Proyecto](#estructura-del-proyecto)
 - [Instalación](#instalación)
@@ -13,6 +19,169 @@ Este proyecto es un dashboard administrativo construido con Next.js y Tailwind C
 - [Despliegue Automático](#despliegue-automático)
 - [Contribución](#contribución)
 - [Licencia](#licencia)
+
+## Arquitectura y Funcionamiento
+
+### Arquitectura General del Sistema
+
+```mermaid
+graph TB
+    subgraph "Frontend (Next.js)"
+        A[Dashboard Usuario] --> B[Componentes Atomic Design]
+        C[Dashboard Admin] --> B
+        B --> D[Atoms]
+        B --> E[Molecules]
+        B --> F[Organisms]
+        
+        D --> G[Buttons, Inputs, Icons]
+        E --> H[Cards, Dropdowns, Selects]
+        F --> I[Sidebar, Header, Sheets]
+    end
+    
+    subgraph "Estado y Datos"
+        J[Hooks Personalizados] --> K[Mock Data]
+        J --> L[Auth Session]
+        J --> M[User Profile]
+    end
+    
+    subgraph "Despliegue"
+        N[GitHub Actions] --> O[Vercel]
+        P[SonarCloud] --> Q[Code Quality]
+    end
+    
+    A --> J
+    C --> J
+    N --> A
+    N --> C
+```
+
+### Flujo de Navegación del Usuario
+
+```mermaid
+flowchart TD
+    A[Inicio de Sesión] --> B{¿Tipo de Usuario?}
+    
+    B -->|Usuario Regular| C[Dashboard Cliente]
+    B -->|Administrador| D[Dashboard Admin]
+    
+    C --> E[Mis Compras]
+    C --> F[Perfil Personal]
+    C --> G[Promociones]
+    
+    D --> H[Búsqueda de Personas]
+    D --> I[Búsqueda de Pedidos]
+    D --> J[Panel de Control]
+    
+    H --> K[Detalle de Persona]
+    K --> L[Historial de Compras]
+    K --> M[Editar Información]
+    K --> N[Agregar Comentarios]
+    
+    I --> O[Detalle de Pedido]
+    O --> P[Cambiar Estado]
+    O --> Q[Agregar Comentarios]
+    
+    style A fill:#e1f5fe
+    style C fill:#e8f5e8
+    style D fill:#fff3e0
+```
+
+### Arquitectura de Componentes (Atomic Design)
+
+```mermaid
+graph LR
+    subgraph "Atoms"
+        A1[Button] --> A2[Input]
+        A2 --> A3[Label]
+        A3 --> A4[Avatar]
+        A4 --> A5[Skeleton]
+    end
+    
+    subgraph "Molecules"
+        M1[Card] --> M2[Dropdown Menu]
+        M2 --> M3[User Menu]
+        M3 --> M4[Color Theme Select]
+        M4 --> M5[Profile Avatar]
+    end
+    
+    subgraph "Organisms"
+        O1[Sidebar] --> O2[Header]
+        O2 --> O3[App Sidebar]
+        O3 --> O4[Sheets]
+        O4 --> O5[Tables]
+    end
+    
+    A1 --> M1
+    A2 --> M1
+    A3 --> M3
+    A4 --> M5
+    A5 --> O1
+    
+    M1 --> O1
+    M2 --> O2
+    M3 --> O3
+    M4 --> O2
+    M5 --> O3
+```
+
+### Flujo de Gestión de Estados
+
+```mermaid
+stateDiagram-v2
+    [*] --> Inicial
+    
+    Inicial --> Autenticando: Usuario ingresa credenciales
+    Autenticando --> Autenticado: Credenciales válidas
+    Autenticando --> Error: Credenciales inválidas
+    
+    Autenticado --> DashboardCliente: Rol = Cliente
+    Autenticado --> DashboardAdmin: Rol = Admin
+    
+    DashboardCliente --> VerPerfil: Navegar a perfil
+    DashboardCliente --> VerPromociones: Ver promociones
+    DashboardCliente --> VerHistorial: Ver historial compras
+    
+    DashboardAdmin --> BuscarPersonas: Buscar usuarios
+    DashboardAdmin --> BuscarPedidos: Buscar pedidos
+    DashboardAdmin --> VerDashboard: Ver métricas
+    
+    BuscarPersonas --> DetallePersona: Seleccionar persona
+    DetallePersona --> EditarPersona: Editar información
+    DetallePersona --> VerHistorialPersona: Ver historial
+    DetallePersona --> AgregarComentario: Agregar comentario
+    
+    BuscarPedidos --> DetallePedido: Seleccionar pedido
+    DetallePedido --> CambiarEstado: Cambiar estado
+    DetallePedido --> AgregarComentarioPedido: Agregar comentario
+    
+    Error --> Inicial: Reintentar
+    VerPerfil --> DashboardCliente: Volver
+    EditarPersona --> DetallePersona: Guardar cambios
+    CambiarEstado --> DetallePedido: Actualizar estado
+```
+
+### Flujo de Datos y Hooks
+
+```mermaid
+sequenceDiagram
+    participant U as Usuario
+    participant C as Componente
+    participant H as Hook
+    participant M as Mock Data
+    participant S as Estado Local
+    
+    U->>C: Interacción (click, input)
+    C->>H: Llamada a hook personalizado
+    H->>M: Solicitud de datos mock
+    M-->>H: Datos simulados
+    H->>S: Actualización de estado
+    S-->>H: Estado actualizado
+    H-->>C: Datos procesados
+    C-->>U: UI actualizada
+    
+    Note over H,M: useAuth, useUserProfile, usePromociones
+    Note over S: Loading, Error, Success states
+```
 
 ## Características
 

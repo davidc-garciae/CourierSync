@@ -1,18 +1,21 @@
 "use client";
-// src/app/dashboard/layout.tsx
+// src/app/admin/layout.tsx
 import { AppSidebar } from "@/components/organisms/app-sidebar";
 import {
   SidebarInset,
   SidebarProvider,
 } from "@/components/organisms/basic/sidebar";
+import { AuthGuard } from "@/components/auth/AuthGuard";
 import { ReactNode } from "react";
 import { navigation_admin } from "@/lib/navigation_admin";
 
-export default function DashboardLayout({ children }: { children: ReactNode }) {
+export default function AdminLayout({ children }: { children: ReactNode }) {
   return (
-    <SidebarProvider className="">
-      <AppSidebar navigationData={navigation_admin} />
-      <SidebarInset>{children}</SidebarInset>
-    </SidebarProvider>
+    <AuthGuard requiredUserType="agente" redirectTo="/">
+      <SidebarProvider className="">
+        <AppSidebar navigationData={navigation_admin} />
+        <SidebarInset>{children}</SidebarInset>
+      </SidebarProvider>
+    </AuthGuard>
   );
 }

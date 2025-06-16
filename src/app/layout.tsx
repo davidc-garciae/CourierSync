@@ -3,6 +3,7 @@ import React, { useState, useEffect, ReactNode } from "react";
 import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/atoms/sonner";
+import { ApolloProviderWrapper } from "@/lib/providers";
 
 function ThemeProviderWrapper({ children }: { children: ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -38,10 +39,12 @@ export default function RootLayout({ children }: RootLayoutProps) {
         />
       </head>
       <body className="flex flex-col min-h-screen">
-        <ThemeProviderWrapper>
-          <main className="flex-1">{children}</main>
-          <Toaster />
-        </ThemeProviderWrapper>
+        <ApolloProviderWrapper>
+          <ThemeProviderWrapper>
+            <main className="flex-1">{children}</main>
+            <Toaster />
+          </ThemeProviderWrapper>
+        </ApolloProviderWrapper>
       </body>
     </html>
   );

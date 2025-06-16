@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useTheme } from "next-themes";
 import {
   Select,
@@ -18,7 +18,8 @@ interface ThemeOption {
   color: string;
 }
 
-const THEMES: ThemeOption[] = [
+// Mover THEMES fuera del componente para evitar recreaciones
+const THEME_OPTIONS: ThemeOption[] = [
   {
     name: "default",
     className: "",
@@ -69,46 +70,77 @@ const THEMES: ThemeOption[] = [
   },
 ];
 
-export function ColorThemeSelect() {
-  const { theme, setTheme, resolvedTheme } = useTheme();
+function ColorThemeSelectComponent() {
+  const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [selected, setSelected] = useState<string>("default");
 
-  // Sincroniza el color desde localStorage y aplica la clase al <html>
-  useEffect(() => {
-    setMounted(true);
-    const color = localStorage.getItem("theme-color") || "default";
-    setSelected(color);
-    applyColorClass(color);
-  }, []);
+  // Función estable para aplicar clases de color
+  const applyColorClass = useCallback((color: string) => {
+    if (typeof document === "undefined") return;
 
-  // Cuando cambia el color, actualiza localStorage y la clase
-  const handleChange = (value: string) => {
-    setSelected(value);
-    localStorage.setItem("theme-color", value);
-    applyColorClass(value);
-  };
-
-  // Cuando cambia el modo (oscuro/claro), re-aplica la clase de color
-  useEffect(() => {
-    if (!mounted) return;
-    applyColorClass(selected);
-  }, [resolvedTheme, mounted]);
-
-  function applyColorClass(color: string) {
     const classList = document.documentElement.classList;
-    // Quita todas las clases de color
-    THEMES.forEach((t) => {
-      if (t.className) classList.remove(t.className);
+    // Quita todas las clases de color existentes
+    THEME_OPTIONS.forEach((theme) => {
+      if (theme.className) classList.remove(theme.className);
     });
     // Aplica la clase seleccionada
-    const themeObj = THEMES.find((t) => t.name === color);
+    const themeObj = THEME_OPTIONS.find((theme) => theme.name === color);
     if (themeObj && themeObj.className) {
       classList.add(themeObj.className);
     }
-  }
+  }, []);
 
-  if (!mounted) return null;
+  // Inicializar solo una vez cuando se monta el componente
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setMounted(true);
+      const color = localStorage.getItem("theme-color") || "default";
+      setSelected(color);
+      applyColorClass(color);
+    }
+  }, [applyColorClass]);
+
+  // Re-aplicar color cuando cambia el tema oscuro/claro
+  useEffect(() => {
+    if (!mounted) return;
+    applyColorClass(selected);
+  }, [resolvedTheme, mounted, selected, applyColorClass]);
+
+  // Maneja el cambio de color
+  const handleChange = useCallback(
+    (value: string) => {
+      setSelected(value);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("theme-color", value);
+      }
+      applyColorClass(value);
+    },
+    [applyColorClass]
+  );
+
+  // Memorizar los items del select para evitar recreaciones
+  const selectItems = useMemo(
+    () =>
+      THEME_OPTIONS.map((themeOption) => (
+        <SelectItem key={`theme-${themeOption.name}`} value={themeOption.name}>
+          <div className="inline-flex items-center gap-2">
+            <span
+              className="w-4 h-4 rounded-full border border-border flex-shrink-0"
+              style={{ backgroundColor: themeOption.color }}
+            />
+            <span>{themeOption.label}</span>
+          </div>
+        </SelectItem>
+      )),
+    []
+  );
+
+  if (!mounted) {
+    return (
+      <div className="w-fit min-w-[8rem] h-9 rounded-md border bg-muted animate-pulse" />
+    );
+  }
 
   return (
     <Select value={selected} onValueChange={handleChange}>
@@ -116,20 +148,11 @@ export function ColorThemeSelect() {
         <SelectValue placeholder="Tema de color" />
       </SelectTrigger>
       <SelectContent>
-        <SelectGroup>
-          {THEMES.map((t) => (
-            <SelectItem key={t.name} value={t.name}>
-              <div className="inline-flex items-center gap-2">
-                <span
-                  className="w-4 h-4 rounded-full"
-                  style={{ background: t.color }}
-                />
-                {t.label}
-              </div>
-            </SelectItem>
-          ))}
-        </SelectGroup>
+        <SelectGroup>{selectItems}</SelectGroup>
       </SelectContent>
     </Select>
   );
 }
+
+// Memoizar el componente completo
+export const ColorThemeSelect = React.memo(ColorThemeSelectComponent);

@@ -11,6 +11,9 @@ import { Separator } from "@/components/atoms/separator";
 import { SidebarTrigger } from "@/components/organisms/basic/sidebar";
 import { ThemeToggleButton } from "../atoms/ThemeToggleButton";
 import { ColorThemeSelect } from "../molecules/ColorThemeSelect";
+import { Button } from "@/components/atoms/button";
+import { LogOut } from "lucide-react";
+import { useAuthSession } from "@/hooks/useAuthSession";
 import Link from "next/link";
 
 export interface DashboardHeaderProps {

@@ -1,6 +1,6 @@
 "use client";
 import { DashboardHeader } from "@/components/molecules/DashboardHeader";
-import Image from "next/image";
+import { ProfileAvatar } from "@/components/molecules/ProfileAvatar";
 import {
   Card,
   CardHeader,
@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/atoms/skeleton";
 import { KeyCircleIcon } from "@/components/ui/key-circle";
 import { CogIcon } from "@/components/ui/cog";
 import { RefreshCCWDotIcon } from "@/components/ui/refresh-ccw-dot";
+import { useUserProfile } from "@/hooks/useUserProfile";
 
 function getBreadcrumbsFromNavigation() {
   return [
@@ -26,30 +27,58 @@ function getBreadcrumbsFromNavigation() {
 
 export default function DatosPersonalesPage() {
   const breadcrumbs = getBreadcrumbsFromNavigation();
-  const [atributos, setAtributos] = useState<typeof atributosData>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { userProfile, loading, error, refetch } = useUserProfile();
+  const [atributos, setAtributos] = useState<
+    Array<{ label: string; value: string; className?: string }>
+  >([]);
 
-  // Lógica de carga extraída a función reutilizable
-  function fetchAtributos() {
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      if (Math.random() < 0.2) {
-        setError(
-          "No se pudieron cargar los datos personales. Por favor, inténtalo de nuevo más tarde."
-        );
-        setLoading(false);
-        return;
-      }
-      setAtributos(atributosData);
-      setLoading(false);
-    }, 1200);
-  }
+  // Estados para controlar los dialogs
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
+  // Actualizar atributos cuando se cargue el perfil
   useEffect(() => {
-    fetchAtributos();
-  }, []);
+    if (userProfile) {
+      const newAtributos = [];
+
+      if (userProfile.userType === "cliente") {
+        newAtributos.push(
+          {
+            label: "Tipo de identificación",
+            value: userProfile.tipoId || "No especificado",
+          },
+          {
+            label: "Número de identificación",
+            value: userProfile.numeroId || "No especificado",
+          },
+          { label: "Nombre", value: userProfile.name },
+          {
+            label: "Apellido",
+            value: userProfile.apellido || "No especificado",
+          }
+        );
+      } else {
+        // Para agentes
+        newAtributos.push(
+          { label: "Tipo de usuario", value: "Agente/Administrador" },
+          { label: "Nombre de usuario", value: userProfile.name }
+        );
+      }
+
+      newAtributos.push(
+        {
+          label: "Dirección",
+          value: userProfile.direccion,
+          className: "md:col-span-2",
+        },
+        { label: "Número de celular", value: userProfile.phone },
+        { label: "Correo electrónico", value: userProfile.email }
+      );
+
+      setAtributos(newAtributos);
+    }
+  }, [userProfile]);
+
+  // La página ya está protegida por AuthGuard en el layout del dashboard
 
   return (
     <>
@@ -60,56 +89,26 @@ export default function DatosPersonalesPage() {
             <CardTitle className="mb-2 text-2xl font-bold text-center">
               Datos personales
             </CardTitle>
-            <div className="flex items-center justify-center mb-2 overflow-hidden bg-black border-2 rounded-full shadow w-28 h-28 border-muted">
-              <Image
-                src="/Shattered.webp"
-                alt="Foto de perfil"
-                width={400}
-                height={400}
-                className="object-cover w-full h-full"
-                style={{
-                  objectPosition: "center",
-                  transform: "scale(2.2)",
-                  imageRendering: "auto",
-                }}
-                priority
-              />
-            </div>
+            <ProfileAvatar
+              name={userProfile?.name}
+              lastName={userProfile?.apellido}
+              size="xl"
+              variant="default"
+              loading={loading}
+              className="mb-2"
+            />
             <div className="grid w-full grid-cols-1 gap-4 p-2 mt-1 mb-10 md:grid-cols-2">
-              <EditProfileSheet
-                user={{
-                  id: "1",
-                  name:
-                    atributos.find((a) => a.label === "Nombre")?.value || "",
-                  apellido:
-                    atributos.find((a) => a.label === "Apellido")?.value || "",
-                  direccion:
-                    atributos.find((a) => a.label === "Dirección")?.value || "",
-                  phone:
-                    atributos.find((a) => a.label === "Número de celular")
-                      ?.value || "",
-                  email:
-                    atributos.find((a) => a.label === "Correo electrónico")
-                      ?.value || "",
-                  tipoId:
-                    atributos.find((a) => a.label === "Tipo de identificación")
-                      ?.value || "",
-                  numeroId:
-                    atributos.find(
-                      (a) => a.label === "Número de identificación"
-                    )?.value || "",
-                  avatar: "/Shattered.webp",
-                }}
-                trigger={
-                  <Button
-                    className="flex items-center w-full shadow-lg group"
-                    variant="default"
-                  >
-                    <span>Editar perfil</span>
-                    <CogIcon className="ml-2 transition-transform duration-300 group-hover:-animate-spin" />
-                  </Button>
-                }
-              />
+              {/* Botón de Editar Perfil */}
+              <Button
+                className="flex items-center w-full shadow-lg group"
+                variant="default"
+                onClick={() => setIsEditProfileOpen(true)}
+              >
+                <span>Editar perfil</span>
+                <CogIcon className="ml-2 transition-transform duration-300 group-hover:-animate-spin" />
+              </Button>
+
+              {/* Botón de Cambiar Contraseña */}
               <ChangePasswordSheet
                 trigger={
                   <Button
@@ -143,7 +142,7 @@ export default function DatosPersonalesPage() {
                   {error}
                 </span>
                 <Button
-                  onClick={fetchAtributos}
+                  onClick={refetch}
                   variant="outline"
                   className="flex items-center shadow-lg group"
                 >
@@ -166,21 +165,18 @@ export default function DatosPersonalesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog de Editar Perfil */}
+      <EditProfileSheet
+        open={isEditProfileOpen}
+        onOpenChange={setIsEditProfileOpen}
+        userProfile={userProfile}
+        onSuccess={() => {
+          refetch(); // Recargar datos después de actualizar
+        }}
+      />
     </>
   );
 }
 
-// Datos simulados fuera del componente para evitar recreación en cada render
-const atributosData = [
-  { label: "Tipo de identificación", value: "Cédula de ciudadanía" },
-  { label: "Número de identificación", value: "1234567890" },
-  { label: "Nombre", value: "David" },
-  { label: "Apellido", value: "García" },
-  {
-    label: "Dirección",
-    value: "Calle 123 #45-67, Ciudad 8, País 9",
-    className: "md:col-span-2",
-  },
-  { label: "Número de celular", value: "+57 300 123 4567" },
-  { label: "Correo electrónico", value: "david.garcia@email.com" },
-];
+// Los datos ahora se cargan dinámicamente desde el backend

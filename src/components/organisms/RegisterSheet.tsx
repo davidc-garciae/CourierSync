@@ -11,6 +11,7 @@ import { Button } from "@/components/atoms/button";
 import { Input } from "@/components/atoms/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useRegister } from "@/hooks/useRegister";
 import {
   Select,
   SelectTrigger,
@@ -21,7 +22,7 @@ import {
 
 export function RegisterSheet({ trigger }: { trigger: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
-  const [saving, setSaving] = React.useState(false);
+  const { register, loading } = useRegister();
   const [form, setForm] = React.useState({
     tipoId: "Cédula de ciudadanía",
     numeroId: "",
@@ -70,53 +71,53 @@ export function RegisterSheet({ trigger }: { trigger: React.ReactNode }) {
     return newErrors;
   };
 
-  // Simulación de API para verificar si el correo ya está registrado
-  type RegisterFormType = {
-    tipoId: string;
-    numeroId: string;
-    nombre: string;
-    apellido: string;
-    direccion: string;
-    celular: string;
-    correo: string;
-    confirmarCorreo: string;
-    password: string;
-    confirmarPassword: string;
-  };
-  async function fakeRegisterApi(form: RegisterFormType) {
-    return new Promise<{ success: boolean; message?: string }>((resolve) => {
-      setTimeout(() => {
-        // Simula que el correo "ya-registrado@email.com" ya existe
-        if (form.correo === "ya-registrado@email.com") {
-          resolve({
-            success: false,
-            message: "Ya existe un usuario registrado con ese correo.",
-          });
-        } else {
-          resolve({ success: true });
-        }
-      }, 1000);
-    });
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors = validate();
     setErrors(newErrors);
     if (Object.keys(newErrors).length > 0) return;
-    setSaving(true);
-    const result = await fakeRegisterApi(form);
-    setSaving(false);
-    if (!result.success) {
-      toast.error("Error de registro", {
-        description: result.message,
+
+    try {
+      const result = await register({
+        tipoId: form.tipoId,
+        numeroId: form.numeroId,
+        nombre: form.nombre,
+        apellido: form.apellido,
+        direccion: form.direccion,
+        celular: form.celular,
+        correo: form.correo,
+        password: form.password,
       });
-      return;
+
+      if (result.success) {
+        toast.success("¡Registro exitoso!", {
+          description: `Bienvenido/a ${form.nombre}. Tu cuenta ha sido creada correctamente.`,
+        });
+        setOpen(false);
+        // Resetear formulario
+        setForm({
+          tipoId: "Cédula de ciudadanía",
+          numeroId: "",
+          nombre: "",
+          apellido: "",
+          direccion: "",
+          celular: "",
+          correo: "",
+          confirmarCorreo: "",
+          password: "",
+          confirmarPassword: "",
+        });
+      } else {
+        toast.error("Error de registro", {
+          description: result.message,
+        });
+      }
+    } catch (err) {
+      toast.error("Error de registro", {
+        description: "Error de conexión con el servidor",
+      });
+      console.error("Error en registro:", err);
     }
-    toast.success("¡Registro exitoso!", {
-      description: format(new Date(), "PPPP 'a las' p"),
-    });
-    setOpen(false);
   };
 
   return (
@@ -328,15 +329,15 @@ export function RegisterSheet({ trigger }: { trigger: React.ReactNode }) {
             </label>
           </div>
           <div className="flex gap-2 pt-2">
-            <Button type="submit" className="w-full" disabled={saving}>
-              {saving ? "Registrando..." : "Registrarse"}
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Registrando..." : "Registrarse"}
             </Button>
             <Button
               type="button"
               variant="secondary"
               className="w-full"
               onClick={() => setOpen(false)}
-              disabled={saving}
+              disabled={loading}
             >
               Cancelar
             </Button>

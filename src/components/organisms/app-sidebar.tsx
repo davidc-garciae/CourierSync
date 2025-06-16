@@ -9,7 +9,8 @@ import { SidebarCollapsibleGroup } from "@/components/molecules/basic/SidebarCol
 import { SidebarMenuList } from "@/components/molecules/basic/SidebarMenuList";
 import { SidebarUserMenu } from "@/components/molecules/SidebarUserMenu";
 import { navigation } from "@/lib/navigation";
-import { useEffect, useState } from "react";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useMemo } from "react";
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   navigationData?: {
@@ -22,23 +23,22 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
 }
 
 export function AppSidebar({ navigationData, ...props }: AppSidebarProps) {
-  // Simula obtener datos de usuario desde una API
-  const [user, setUser] = useState<{
-    name: string;
-    email: string;
-    avatar: string;
-  } | null>(null);
+  // Obtener datos reales del usuario autenticado
+  const { userProfile, loading } = useUserProfile();
 
-  useEffect(() => {
-    // Simulación de llamada a API
-    setTimeout(() => {
-      setUser({
-        name: "David García",
-        email: "david.garcia@email.com",
-        avatar: "/Shattered.webp",
-      });
-    }, 100); // 600ms de delay simulado
-  }, []);
+  // Transformar userProfile al formato esperado por SidebarUserMenu
+  const user = useMemo(() => {
+    if (!userProfile) return null;
+
+    return {
+      name: userProfile.apellido
+        ? `${userProfile.name} ${userProfile.apellido}`
+        : userProfile.name,
+      email: userProfile.email,
+      avatar: userProfile.avatar,
+      userType: userProfile.userType,
+    };
+  }, [userProfile]);
 
   const data = navigationData || navigation;
 
@@ -61,7 +61,16 @@ export function AppSidebar({ navigationData, ...props }: AppSidebarProps) {
         ))}
       </SidebarContent>
       {/* Footer: Menú de usuario */}
-      {user && <SidebarUserMenu user={user} />}
+      {loading ? (
+        <div className="px-2 pb-2 mt-auto">
+          <div className="flex items-center gap-2 p-2 text-sm text-muted-foreground">
+            <div className="w-4 h-4 border-2 border-gray-300 rounded-full animate-spin border-t-blue-600"></div>
+            Cargando usuario...
+          </div>
+        </div>
+      ) : (
+        user && <SidebarUserMenu user={user} />
+      )}
       <SidebarRail />
     </Sidebar>
   );

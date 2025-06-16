@@ -11,6 +11,16 @@ export const navigation = {
       ],
     },
     {
+      title: "Promociones",
+      url: "/dashboard/promociones",
+      items: [
+        {
+          title: "Mis promociones",
+          url: "/dashboard/promociones",
+        },
+      ],
+    },
+    {
       title: "Historial",
       url: "/dashboard",
       items: [

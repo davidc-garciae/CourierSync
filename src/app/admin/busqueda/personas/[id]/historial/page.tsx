@@ -22,75 +22,84 @@ import { toast } from "sonner";
 import { CommentsSheet } from "@/components/organisms/CommentsSheet";
 import { StateEditorSheet } from "@/components/organisms/StateEditorSheet";
 import { RefreshCCWDotIcon } from "@/components/ui/refresh-ccw-dot";
+import { useQuery, useMutation } from "@apollo/client";
+import {
+  ENVIOS_POR_CLIENTE,
+  UPDATE_ENVIO,
+  BUSCA_CLIENTE,
+} from "@/lib/graphql/mutations";
+import { useComentarios } from "@/hooks/useComentarios";
 
-// Simulación de pedidos (en un caso real, esto vendría de la API)
-const fakePedidos = [
-  {
-    id_envio: "001",
-    numero_guia: "A123456",
-    fecha_compra: "2024-05-01",
-    estado: "En viaje",
-    direccion: "Calle 123 #45-67, Ciudad",
-    nombre_cliente: "David García",
-    precio: "$50.000",
-    recibo: "#REC-001",
-    comentarios: [
-      { autor: "Admin", texto: "Pedido creado", fecha: "2024-05-01" },
-      {
-        autor: "Soporte",
-        texto: "Cliente pidió cambio de dirección",
-        fecha: "2024-05-02",
-      },
-    ],
-    userId: "1",
-  },
-  {
-    id_envio: "002",
-    numero_guia: "B654321",
-    fecha_compra: "2024-04-20",
-    estado: "Entregado",
-    direccion: "Carrera 45 #67-89, Ciudad",
-    nombre_cliente: "David García",
-    precio: "$75.000",
-    recibo: "#REC-002",
-    comentarios: [
-      { autor: "Admin", texto: "Cliente satisfecho.", fecha: "2024-04-21" },
-    ],
-    userId: "1",
-  },
-  {
-    id_envio: "003",
-    numero_guia: "C789012",
-    fecha_compra: "2024-03-15",
-    estado: "Cancelado",
-    direccion: "Avenida 10 #20-30, Ciudad",
-    nombre_cliente: "Ana Torres",
-    precio: "$60.000",
-    recibo: "#REC-003",
-    comentarios: [
-      {
-        autor: "Admin",
-        texto: "Pedido cancelado por el cliente.",
-        fecha: "2024-03-16",
-      },
-    ],
-    userId: "2",
-  },
-];
+type Envio = {
+  id_envio: string;
+  numeroGuia: string;
+  direccionEnvio: string;
+  fechaCompra: string;
+  precio: number;
+  id_estado: {
+    id_estado: number;
+    nombre: string;
+  };
+  id_cliente: {
+    id_cliente: string;
+    nombre: string;
+    apellido: string;
+  };
+};
 
-const estadoColor = {
-  "En viaje": "bg-blue-100 text-blue-700",
-  Entregado: "bg-green-100 text-green-700",
-  Cancelado: "bg-red-100 text-red-700",
-} as const;
+// Función para formatear precio
+const formatPrecio = (precio: number): string => {
+  return new Intl.NumberFormat("es-CO", {
+    style: "currency",
+    currency: "COP",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(precio);
+};
 
-function getBreadcrumbs(id: string | undefined) {
+// Función para formatear fecha
+const formatFecha = (fechaISO: string): string => {
+  try {
+    const fecha = new Date(fechaISO);
+    return fecha.toLocaleDateString("es-CO", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+  } catch {
+    return fechaISO;
+  }
+};
+
+// Función para obtener colores según estado (responsive al tema)
+const getEstadoColor = (estado: string): string => {
+  const estadoLower = estado.toLowerCase();
+  if (estadoLower.includes("entregado") || estadoLower.includes("completado")) {
+    return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+  }
+  if (
+    estadoLower.includes("viaje") ||
+    estadoLower.includes("proceso") ||
+    estadoLower.includes("enviado")
+  ) {
+    return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+  }
+  if (estadoLower.includes("cancelado") || estadoLower.includes("rechazado")) {
+    return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+  }
+  if (estadoLower.includes("pendiente") || estadoLower.includes("esperando")) {
+    return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+  }
+  return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300";
+};
+
+function getBreadcrumbs(id: string | undefined, clienteNombre?: string) {
   return [
     { label: "Administrador", href: "/admin" },
     { label: "Búsqueda", href: "/admin/busqueda/personas" },
     id
       ? {
-          label: `Perfil de usuario #${id}`,
+          label: clienteNombre || `Usuario #${id}`,
           href: `/admin/busqueda/personas/${id}`,
         }
       : { label: "Perfil de usuario", href: "#" },
@@ -100,79 +109,99 @@ function getBreadcrumbs(id: string | undefined) {
 
 export default function AdminUserHistorialPage() {
   const { id } = useParams() as { id: string };
-  const [pedidos, setPedidos] = useState<typeof fakePedidos>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState<string | null>(null); // id_envio en edición
-  const [editForm, setEditForm] = useState<{ estado: string }>({
-    estado: "",
-  });
-  const [comentSheet, setComentSheet] = useState<string | null>(null); // id_envio para sheet
-  const [comentForm, setComentForm] = useState("");
-
+  const [comentSheet, setComentSheet] = useState<string | null>(null);
   const [stateEditorSheet, setStateEditorSheet] = useState<string | null>(null);
+  const [editingEnvio, setEditingEnvio] = useState<Envio | null>(null);
+  const [estadoSeleccionado, setEstadoSeleccionado] = useState<string>("");
 
-  useEffect(() => {
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      // Simula error API
-      if (Math.random() < 0.15) {
-        setError("No se pudo cargar el historial. Intenta de nuevo más tarde.");
-        setLoading(false);
-        return;
-      }
-      setPedidos(fakePedidos.filter((p) => p.userId === id));
-      setLoading(false);
-    }, 1000);
-  }, [id]);
+  // Hook para manejar comentarios
+  const {
+    comentarios,
+    loading: loadingComentarios,
+    agregarComentario,
+  } = useComentarios(comentSheet);
 
-  const handleEdit = (pedido: (typeof fakePedidos)[0]) => {
-    setEditing(pedido.id_envio);
-    setEditForm({ estado: pedido.estado });
-    setStateEditorSheet(pedido.id_envio);
+  // Query para obtener datos del cliente (para el breadcrumb)
+  const { data: clienteData } = useQuery(BUSCA_CLIENTE, {
+    variables: { id_cliente: id },
+    skip: !id,
+  });
+
+  // Query para obtener envíos del cliente
+  const { data, loading, error, refetch } = useQuery(ENVIOS_POR_CLIENTE, {
+    variables: { id_cliente: parseInt(id) },
+    fetchPolicy: "cache-and-network",
+    skip: !id,
+  });
+
+  // Mutation para actualizar envío
+  const [updateEnvio, { loading: updatingEnvio }] = useMutation(UPDATE_ENVIO, {
+    onCompleted: () => {
+      toast.success("Estado actualizado exitosamente");
+      setStateEditorSheet(null);
+      setEditingEnvio(null);
+      setEstadoSeleccionado("");
+      refetch(); // Recargar datos
+    },
+    onError: (error) => {
+      toast.error(`Error al actualizar: ${error.message}`);
+    },
+  });
+
+  const envios: Envio[] = data?.enviosPorCliente || [];
+  const cliente = clienteData?.buscaCliente;
+  const clienteNombre = cliente
+    ? `${cliente.nombre} ${cliente.apellido}`
+    : undefined;
+
+  const handleEdit = (envio: Envio) => {
+    setEditingEnvio(envio);
+    setEstadoSeleccionado(envio.id_estado.id_estado.toString());
+    setStateEditorSheet(envio.id_envio);
   };
 
-  const handleEditChange = (value: string) => {
-    setEditForm({ estado: value });
-  };
+  const handleEditSave = async () => {
+    if (!editingEnvio || !estadoSeleccionado) return;
 
-  const handleEditSave = () => {
-    setPedidos((prev) =>
-      prev.map((p) =>
-        p.id_envio === editing ? { ...p, estado: editForm.estado } : p
-      )
-    );
-    setEditing(null);
-    setStateEditorSheet(null);
-    toast.success("Pedido actualizado", {
-      description: `Estado: ${editForm.estado}`,
+    // Preparar todos los campos requeridos para la mutación
+    const enviosInput = {
+      id_cliente: parseInt(editingEnvio.id_cliente.id_cliente),
+      id_estado: parseInt(estadoSeleccionado),
+      numeroGuia: editingEnvio.numeroGuia,
+      direccionEnvio: editingEnvio.direccionEnvio,
+      fechaCompra: editingEnvio.fechaCompra,
+      precio: editingEnvio.precio,
+    };
+
+    await updateEnvio({
+      variables: {
+        id_envio: editingEnvio.id_envio,
+        enviosInput,
+      },
     });
-  };
-
-  const handleRetry = () => {
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      if (Math.random() < 0.15) {
-        setError("No se pudo cargar el historial. Intenta de nuevo más tarde.");
-        setLoading(false);
-        return;
-      }
-      setPedidos(fakePedidos.filter((p) => p.userId === id));
-      setLoading(false);
-    }, 1000);
   };
 
   return (
     <>
-      <DashboardHeader breadcrumbs={getBreadcrumbs(id)} />
+      <DashboardHeader breadcrumbs={getBreadcrumbs(id, clienteNombre)} />
       <div className="flex flex-col w-full h-full p-4 bg-gradient-to-br from-primary/70 to-primary/10">
         <Card className="w-full mx-auto border shadow-2xl backdrop-blur border-border bg-card/95">
           <CardHeader className="flex flex-col items-center gap-2 pb-2 mb-4">
             <CardTitle className="mb-2 text-2xl font-bold text-center">
-              Historial de pedidos del usuario
+              Historial de envíos del usuario
             </CardTitle>
+            {clienteNombre && (
+              <p className="text-sm text-muted-foreground">
+                Cliente: {clienteNombre}
+              </p>
+            )}
+            {!loading && (
+              <p className="text-sm text-muted-foreground">
+                {envios.length > 0
+                  ? `${envios.length} envío(s) registrado(s)`
+                  : "Sin envíos registrados"}
+              </p>
+            )}
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -188,78 +217,87 @@ export default function AdminUserHistorialPage() {
                   role="alert"
                   aria-live="assertive"
                 >
-                  {error}
+                  ❌ Error al cargar historial: {error.message}
                 </span>
                 <Button
-                  onClick={handleRetry}
+                  onClick={() => refetch()}
                   variant="outline"
                   className="flex items-center shadow-lg group"
                 >
                   Reintentar
-                  <RefreshCCWDotIcon className="ml-2 transition-transform duration-300 group-hover:-animate-spin" />
+                  <RefreshCCWDotIcon className="ml-2 transition-transform duration-300 group-hover:rotate-180" />
                 </Button>
               </div>
-            ) : pedidos.length === 0 ? (
-              <div className="py-8 text-center text-muted-foreground">
-                Este usuario no tiene pedidos registrados.
+            ) : envios.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-4 py-12 text-center">
+                <div className="text-6xl mb-4">📦</div>
+                <h3 className="text-xl font-semibold text-muted-foreground">
+                  Sin envíos registrados
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-md">
+                  Este usuario aún no tiene envíos registrados en el sistema.
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>ID</TableHead>
+                      <TableHead>ID Envío</TableHead>
                       <TableHead>Guía</TableHead>
                       <TableHead>Fecha</TableHead>
                       <TableHead>Estado</TableHead>
                       <TableHead>Dirección</TableHead>
                       <TableHead>Precio</TableHead>
-                      <TableHead>Recibo</TableHead>
-                      <TableHead>Comentario</TableHead>
+                      <TableHead>Comentarios</TableHead>
                       <TableHead>Acciones</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {pedidos.map((pedido) => (
-                      <TableRow key={pedido.id_envio}>
-                        <TableCell>{pedido.id_envio}</TableCell>
-                        <TableCell>{pedido.numero_guia}</TableCell>
-                        <TableCell>{pedido.fecha_compra}</TableCell>
+                    {envios.map((envio) => (
+                      <TableRow key={envio.id_envio}>
+                        <TableCell className="font-mono text-sm">
+                          {envio.id_envio}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">
+                          {envio.numeroGuia}
+                        </TableCell>
+                        <TableCell>{formatFecha(envio.fechaCompra)}</TableCell>
                         <TableCell>
                           <span
-                            className={`px-2 py-1 rounded text-xs font-semibold ${
-                              estadoColor[
-                                pedido.estado as keyof typeof estadoColor
-                              ]
-                            }`}
+                            className={`px-2 py-1 rounded text-xs font-semibold ${getEstadoColor(
+                              envio.id_estado.nombre
+                            )}`}
                           >
-                            {pedido.estado}
+                            {envio.id_estado.nombre}
                           </span>
                         </TableCell>
-                        <TableCell>{pedido.direccion}</TableCell>
-                        <TableCell>{pedido.precio}</TableCell>
-                        <TableCell>{pedido.recibo}</TableCell>
                         <TableCell
                           className="max-w-xs truncate"
-                          title={pedido.comentarios
-                            .map((c) => c.texto)
-                            .join(" | ")}
+                          title={envio.direccionEnvio}
                         >
+                          {envio.direccionEnvio}
+                        </TableCell>
+                        <TableCell className="font-semibold text-green-600 dark:text-green-400">
+                          {formatPrecio(envio.precio)}
+                        </TableCell>
+                        <TableCell>
                           <Button
                             size="sm"
                             variant="ghost"
-                            onClick={() => setComentSheet(pedido.id_envio)}
+                            onClick={() => setComentSheet(envio.id_envio)}
                           >
-                            Ver comentarios ({pedido.comentarios.length})
+                            Ver comentarios
                           </Button>
                         </TableCell>
                         <TableCell>
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => handleEdit(pedido)}
+                            onClick={() => handleEdit(envio)}
+                            disabled={updatingEnvio}
                           >
-                            Editar
+                            Editar estado
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -268,61 +306,40 @@ export default function AdminUserHistorialPage() {
                 </Table>
               </div>
             )}
+
+            {/* Sheet para comentarios */}
+            <CommentsSheet
+              open={!!comentSheet}
+              onOpenChange={(open) => {
+                if (!open) setComentSheet(null);
+              }}
+              comentarios={comentarios}
+              onAddComentario={agregarComentario}
+              loading={loadingComentarios}
+            />
+
+            {/* Sheet para editar estado */}
+            <StateEditorSheet
+              open={!!stateEditorSheet}
+              value={estadoSeleccionado}
+              onChange={setEstadoSeleccionado}
+              onSave={handleEditSave}
+              onCancel={() => {
+                setStateEditorSheet(null);
+                setEditingEnvio(null);
+                setEstadoSeleccionado("");
+              }}
+              onOpenChange={(open) => {
+                if (!open) {
+                  setStateEditorSheet(null);
+                  setEditingEnvio(null);
+                  setEstadoSeleccionado("");
+                }
+              }}
+            />
           </CardContent>
         </Card>
       </div>
-      {/* Sheet para comentarios */}
-      <CommentsSheet
-        open={!!comentSheet}
-        onOpenChange={() => setComentSheet(null)}
-        comentarios={
-          pedidos.find((p) => p.id_envio === comentSheet)?.comentarios || []
-        }
-        onAddComentario={(texto) => {
-          const now = new Date();
-          const fecha = now.toISOString().slice(0, 10);
-          const hora = now.toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
-          });
-          setPedidos((prev) =>
-            prev.map((p) =>
-              p.id_envio === comentSheet
-                ? {
-                    ...p,
-                    comentarios: [
-                      ...p.comentarios,
-                      {
-                        autor: "Admin",
-                        texto,
-                        fecha: `${fecha} ${hora}`,
-                      },
-                    ],
-                  }
-                : p
-            )
-          );
-          toast.success("Comentario agregado");
-        }}
-        loading={false}
-      />
-      {/* Sheet para editar estado */}
-      <StateEditorSheet
-        open={!!stateEditorSheet}
-        value={editForm.estado}
-        onChange={(value) => setEditForm({ estado: value })}
-        onSave={handleEditSave}
-        onCancel={() => {
-          setStateEditorSheet(null);
-          setEditing(null);
-        }}
-        onOpenChange={(open) => {
-          if (!open) {
-            setStateEditorSheet(null);
-            setEditing(null);
-          }
-        }}
-      />
     </>
   );
 }
