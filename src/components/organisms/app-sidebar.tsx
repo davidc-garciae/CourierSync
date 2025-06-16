@@ -35,7 +35,7 @@ export function AppSidebar({ navigationData, ...props }: AppSidebarProps) {
         ? `${userProfile.name} ${userProfile.apellido}`
         : userProfile.name,
       email: userProfile.email,
-      avatar: userProfile.avatar,
+      // No pasar avatar para que siempre use las iniciales
       userType: userProfile.userType,
     };
   }, [userProfile]);

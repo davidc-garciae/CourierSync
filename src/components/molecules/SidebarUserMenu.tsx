@@ -7,7 +7,7 @@ interface SidebarUserMenuProps {
   user: {
     name: string;
     email: string;
-    avatar: string;
+    avatar?: string;
     userType?: "cliente" | "agente";
   };
 }

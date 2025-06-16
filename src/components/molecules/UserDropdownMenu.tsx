@@ -16,7 +16,7 @@ interface UserDropdownMenuProps {
   user: {
     name: string;
     email: string;
-    avatar: string;
+    avatar?: string;
     userType?: "cliente" | "agente";
   };
   onLogout: () => void;
