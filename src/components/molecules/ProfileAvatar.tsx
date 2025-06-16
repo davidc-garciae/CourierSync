@@ -68,7 +68,7 @@ export function ProfileAvatar({
         <img
           src={avatarUrl}
           alt={`${name} ${lastName}`.trim() || "Avatar"}
-          className="w-full h-full object-cover"
+          className="object-cover w-full h-full"
           onError={(e) => {
             // Si falla la imagen, mostrar iniciales
             e.currentTarget.style.display = "none";
